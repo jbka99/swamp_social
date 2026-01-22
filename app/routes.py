@@ -27,7 +27,7 @@ def index():
             flash('Пост опубликован!')
             return redirect(url_for('routes.index'))
         
-    posts = Post.query.order_by(Post.date_posted.desc()).all()
+    posts = Post.query.filter_by(user_id=current_user.id).order_by(Post.date_posted.desc()).all()
     return render_template('index.html', posts=posts, user=current_user)
 
 @bp.route('/login', methods=['GET', 'POST'])
