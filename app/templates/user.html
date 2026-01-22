@@ -5,10 +5,11 @@
 {% block content %}
 <div class="profile-card">
     <div class="avatar-container">
-        <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ user.username }}" 
-     alt="Avatar" 
-     class="profile-avatar">
-    </div>
+    <img src="{{ user.avatar_url if user.avatar_url else 'https://api.dicebear.com/7.x/identicon/svg?seed=' + user.username }}" 
+         alt="Avatar" 
+         class="profile-avatar"
+         referrerpolicy="no-referrer">
+</div>
     <div class="profile-info">
         <h1>{{ user.display_name or user.username }}</h1>
         <p class="user-age">Возраст: {{ user.age or 'не указан' }}</p>
