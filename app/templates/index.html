@@ -42,7 +42,16 @@
     {% for post in posts %}
     <div class="post-item">
     <div class="post-header">
-        <strong>{{ post.author.display_name or post.author.username }}</strong>
+    <div class="author-info">
+        <img src="{{ post.author.avatar_url or 'https://api.dicebear.com/7.x/identicon/svg?seed=' + post.author.username }}" 
+             alt="AV" class="post-avatar" referrerpolicy="no-referrer">
+        
+        <a href="{{ url_for('routes.user_profile', username=post.author.username) }}" class="author-name">
+            <strong>{{ post.author.display_name or post.author.username }}</strong>
+        </a>
+    </div>
+
+    <div class="post-meta">
         <small>{{ post.date_posted.strftime('%H:%M | %d.%m.%Y') }}</small>
         
         {% if current_user.is_admin or post.author == current_user %}
@@ -51,6 +60,7 @@
         </form>
         {% endif %}
     </div>
+</div>
     <h4>{{ post.title }}</h4>
     <p>{{ post.content }}</p>
 </div>

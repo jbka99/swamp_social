@@ -278,3 +278,36 @@ button:active {
     color: var(--accent-green);
     text-decoration: underline;
 }
+
+/* Контейнер для фото и имени */
+.author-info {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Расстояние между фото и текстом */
+}
+
+/* Стиль маленькой аватарки в посте */
+.post-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%; /* Делаем круглой */
+    object-fit: cover;
+    border: 1px solid #444;
+}
+
+/* Настройка заголовка для размещения элементов по краям */
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.author-name {
+    text-decoration: none;
+    color: inherit;
+}
+
+.author-name:hover {
+    color: #2ecc71; /* Подсветка при наведении */
+}
