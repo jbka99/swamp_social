@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Лента{% endblock %}
+
+{% block content %}
+<h2>Общая лента</h2>
+<div class="posts-list">
+    {% for post in posts %}
+    <div class="post-item">
+        <div class="post-header">
+    <a href="{{ url_for('routes.user_profile', username=post.author.username) }}" style="text-decoration: none; color: inherit;">
+        <strong>{{ post.author.display_name or post.author.username }}</strong>
+    </a>
+    <small>{{ post.date_posted.strftime('%H:%M | %d.%m.%Y') }}</small>
+</div>
+        <h4>{{ post.title }}</h4>
+        <p>{{ post.content }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

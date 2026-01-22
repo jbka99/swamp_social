@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lake | {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="main-nav">
+      <div class="nav-container">
+        <a class="nav-logo">LAKE</a>
+        <div class="nav-links">
+            <a href="{{ url_for('routes.feed') }}">Лента</a>
+            <a href="{{ url_for('routes.index') }}">Профиль</a>
+            <a href="{{ url_for('routes.settings') }}">Редактировать</a>
+            <a href="{{ url_for('routes.logout') }}" class="nav-logout">Выход</a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container {% if request.endpoint in ['routes.login', 'routes.register'] %}auth-container{% endif %}">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

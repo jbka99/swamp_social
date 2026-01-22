@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<div class="profile-card">
+    <div class="avatar-container">
+        <img src="{{ user.avatar_url or 'https://ui-avatars.com/api/?name=' + user.username + '&background=2ecc71&color=fff' }}" alt="Avatar" class="profile-avatar">
+    </div>
+    
+    <div class="profile-info">
+        <h1>{{ user.display_name or user.username }}</h1>
+        
+        <a href="{{ url_for('routes.settings') }}" class="btn-edit">Редактировать профиль</a>
+        
+        <p class="user-age">Возраст: {{ user.age or 'не указан' }}</p>
+        <div class="user-bio">
+            <strong>О себе:</strong>
+            <p>{{ user.bio or 'Тут пока пусто...' }}</p>
+        </div>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
+    
+    <!-- <div class="profile-actions">
+        <a href="{{ url_for('routes.logout') }}" class="btn-logout">Выйти из аккаунта</a>
+    </div> -->
+</div>
+<div class="create-post">
+    <h3>Что нового?</h3>
+    <form method="POST" action="{{ url_for('routes.index') }}">
+        <input type="text" name="title" placeholder="Заголовок" required>
+        <textarea name="body" placeholder="Ваши мысли..." rows="3" required></textarea>
+        <button type="submit" class="btn-edit">Опубликовать</button>
+    </form>
+</div>
+
+<div class="posts-list">
+    <h3>Мои записи</h3>
+    {% for post in posts %}
+    <div class="post-item">
+    <div class="post-header">
+        <strong>{{ post.author.display_name or post.author.username }}</strong>
+        <small>{{ post.date_posted.strftime('%H:%M | %d.%m.%Y') }}</small>
+        
+        {% if post.author == current_user %}
+        <form action="{{ url_for('routes.delete_post', post_id=post.id) }}" method="POST" style="display:inline;">
+            <button type="submit" class="btn-delete" onclick="return confirm('Удалить этот пост?')">×</button>
+        </form>
+        {% endif %}
+    </div>
+    <h4>{{ post.title }}</h4>
+    <p>{{ post.content }}</p>
+</div>
+    {% else %}
+    <p>У вас еще нет постов.</p>
+    {% endfor %}
+</div>
+{% endblock %}

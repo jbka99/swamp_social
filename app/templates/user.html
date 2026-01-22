@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="profile-card">
+    <div class="avatar-container">
+        <img src="{{ user.avatar_url or 'https://ui-avatars.com/api/?name=' + user.username }}" alt="Avatar" class="profile-avatar">
+    </div>
+    <div class="profile-info">
+        <h1>{{ user.display_name or user.username }}</h1>
+        <p class="user-age">Возраст: {{ user.age or 'не указан' }}</p>
+        <div class="user-bio">
+            <strong>О себе:</strong>
+            <p>{{ user.bio or 'Пользователь еще ничего не рассказал о себе.' }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="posts-list">
+    <h3>Записи пользователя</h3>
+    {% for post in posts %}
+    <div class="post-item">
+        <div class="post-header">
+            <strong>{{ post.author.username }}</strong>
+            <small>{{ post.date_posted.strftime('%H:%M | %d.%m.%Y') }}</small>
+        </div>
+        <h4>{{ post.title }}</h4>
+        <p>{{ post.content }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

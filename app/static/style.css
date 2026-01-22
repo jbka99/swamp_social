@@ -1,0 +1,280 @@
+/* static/style.css */
+:root {
+    --bg-color: #1a1a1a;       /* Темный фон */
+    --card-bg: #242424;       /* Фон карточки */
+    --text-color: #e0e0e0;    /* Цвет текста */
+    --accent-green: #2ecc71;  /* Основной зеленый (Emerald) */
+    --hover-green: #27ae60;   /* Темно-зеленый для наведения */
+}
+
+.main-nav {
+    background: #111;
+    padding: 15px 0;
+    border-bottom: 1px solid #333;
+    margin-bottom: 30px;
+}
+
+.nav-container {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.nav-logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--accent-green);
+    text-decoration: none;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 0.9rem;
+    transition: 0.3s;
+}
+
+.nav-links a:hover {
+    color: var(--accent-green);
+}
+
+.create-post, .post-item {
+    background: #1a1a1a;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    text-align: left;
+}
+
+.create-post input {
+    width: 100%;
+    margin-bottom: 10px;
+    background: #000;
+    border: 1px solid #333;
+    color: white;
+    padding: 8px;
+}
+
+.post-item h4 {
+    color: var(--accent-green);
+    margin: 5px 0;
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 10px;
+}
+
+.post-header strong {
+    color: var(--accent-green);
+}
+
+.btn-edit {
+    display: inline-block;
+    padding: 6px 15px;
+    background-color: transparent;
+    border: 1px solid var(--accent-green);
+    color: var(--accent-green);
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+    transition: 0.3s;
+}
+
+.btn-edit:hover {
+    background-color: var(--accent-green);
+    color: black;
+}
+
+textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background-color: #1a1a1a;
+    color: white;
+    font-family: inherit;
+    box-sizing: border-box;
+    resize: vertical; /* Позволяет тянуть поле только вниз */
+}
+
+.settings-card h2 {
+    color: var(--accent-green);
+    margin-bottom: 20px;
+}
+
+.profile-card {
+    text-align: center;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid var(--accent-green);
+    object-fit: cover;
+    margin-bottom: 15px;
+}
+
+.profile-info h1 {
+    margin: 10px 0;
+    color: var(--accent-green);
+}
+
+.user-age {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.user-bio {
+    margin-top: 20px;
+    text-align: left;
+    background: #1a1a1a;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.btn-logout {
+    color: #e74c3c;
+    text-decoration: none;
+    font-size: 0.8rem;
+    transition: 0.3s;
+}
+
+.btn-logout:hover {
+    text-decoration: underline;
+}
+
+.flash-message {
+    color: #e74c3c;
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    background: rgba(231, 76, 60, 0.1); /* Легкий фон под ошибку */
+    padding: 10px;
+    border-radius: 5px;
+}
+
+body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: block;
+    justify-content: center;
+    /* align-items: center; */
+    /* height: 100vh; */
+    margin: 0;
+}
+
+.container {
+    background-color: var(--card-bg);
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    width: 100%;
+    max-width: 800px;
+    margin: 20px auto;
+    border: 1px solid #333;
+}
+
+h2 {
+    margin-top: 0;
+    text-align: center;
+    color: var(--accent-green);
+    font-weight: 500;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #888;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background-color: #1a1a1a;
+    color: white;
+    box-sizing: border-box; /* Чтобы padding не раздувал ширину */
+    transition: border-color 0.3s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--accent-green);
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--accent-green);
+    color: #1a1a1a;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+button:hover {
+    background-color: var(--hover-green);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.auth-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+.auth-container {
+    max-width: 350px !important; /* Узкое окно только для логина */
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Центрируем элементы по вертикали */
+}
+
+.btn-delete {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+    transition: 0.3s;
+    width: auto; /* Чтобы не растягивалась на всю ширину как основные кнопки */
+}
+
+.btn-delete:hover {
+    color: #c0392b;
+    transform: scale(1.2);
+}
+
+.post-header a:hover strong {
+    color: var(--accent-green);
+    text-decoration: underline;
+}
