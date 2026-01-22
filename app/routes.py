@@ -6,12 +6,7 @@ from app.services import get_main_feed
 
 bp = Blueprint('routes', __name__)
 
-@bp.route('/')
-def index():
-    me = User.query.filter_by(username='admin').first()
-    if me and not me.is_admin:
-        me.is_admin = True
-        db.session.commit()
+    
 
 @bp.before_app_request
 def setup_db():
@@ -23,6 +18,12 @@ def setup_db():
 @bp.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
+
+    me = User.query.filter_by(username='admin').first()
+    if me and not me.is_admin:
+        me.is_admin = True
+        db.session.commit()
+
     if request.method == 'POST':
         body = request.form.get('body')
         if body:
@@ -123,9 +124,12 @@ def feed():
 def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
     
-    if post.author != current_user:
-        flash('Вы не можете удалить чужой пост!')
-        return redirect(url_for('routes.index'))
+    if current_user.is_admin or post.author == current_user:
+        db.session.delete(post)
+        db.session.commit()
+        flash('Пост удален.')
+    else:
+        flash('У вас нет прав для удаления этого поста!')
     
     db.session.delete(post)
     db.session.commit()
