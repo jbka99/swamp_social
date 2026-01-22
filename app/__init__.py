@@ -2,10 +2,6 @@ from flask import Flask
 from config import Config
 from app.extensions import db, migrate, login_manager
 
-# @app.context_processor
-# def inject_user():
-#     return dict(user=current_user)
-
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
@@ -17,5 +13,9 @@ def create_app(config_class=Config):
 
     from app.routes import bp as main_bp
     app.register_blueprint(main_bp)
+
+    with app.app_context():
+        from app.models import User, Post
+        db.create_all()
 
     return app
