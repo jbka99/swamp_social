@@ -5,7 +5,9 @@
 {% block content %}
 <div class="profile-card">
     <div class="avatar-container">
-        <img src="{{ user.avatar_url or 'https://ui-avatars.com/api/?name=' + user.username + '&background=2ecc71&color=fff' }}" alt="Avatar" class="profile-avatar">
+        <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ user.username }}" 
+     alt="Avatar" 
+     class="profile-avatar">
     </div>
     
     <div class="profile-info">
@@ -43,7 +45,7 @@
         <strong>{{ post.author.display_name or post.author.username }}</strong>
         <small>{{ post.date_posted.strftime('%H:%M | %d.%m.%Y') }}</small>
         
-        {% if post.author == current_user %}
+        {% if current_user.is_admin or post.author == current_user %}
         <form action="{{ url_for('routes.delete_post', post_id=post.id) }}" method="POST" style="display:inline;">
             <button type="submit" class="btn-delete" onclick="return confirm('Удалить этот пост?')">×</button>
         </form>
