@@ -6,6 +6,12 @@ from app.services import get_main_feed
 
 bp = Blueprint('routes', __name__)
 
+@bp.before_app_request
+def setup_db():
+    # Эта функция будет запускаться ОДИН РАЗ перед любым запросом
+    # и пытаться создать таблицы
+    db.create_all()
+
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/index', methods=['GET', 'POST'])
 @login_required
