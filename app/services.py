@@ -23,7 +23,7 @@ class DeleteAllPostsFromUserResult:
     reason: str # "ok" | "not_found" | "forbidden"
 
 def admin_delete_all_posts_from_user(target_user_id: int, actor_is_admin: bool) -> DeleteAllPostsFromUserResult:
-    if actor_is_admin:
+    if not actor_is_admin:
         return DeleteAllPostsFromUserResult(deleted=False, deleted_count=0, reason="forbidden")
     
     user = db.session.get(User, int(target_user_id))
@@ -57,7 +57,7 @@ def admin_delete_user(target_user_id: int, actor_user_id: int, actor_is_admin: b
     # Сначала удаляю посты, а потом пользователя
     Post.query.filter(Post.user_id == user.id).delete(synchronize_session=False)
     db.session.delete(user)
-    db.session.commit
+    db.session.commit()
 
     return DeleteUserResult(deleted=True, reason="ok")
 
