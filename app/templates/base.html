@@ -17,10 +17,17 @@
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
 </head>
 
-<body class="bg-dark text-light">
+{#
+  Layout v1:
+  - 3-column shell (left threads placeholder, center content, right user panel)
+  - side columns hide on <lg to keep mobile usable
+  - we keep Bootstrap + minimal JS
+#}
 
-  <nav class="navbar navbar-expand-lg navbar-dark bg-black border-bottom border-secondary">
-    <div class="container">
+<body class="swamp theme-light">
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-black border-bottom border-secondary">
+    <div class="container-fluid px-3 px-lg-4">
       <a class="navbar-brand fw-bold" href="{{ url_for('routes.feed') }}">SWAMP</a>
 
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#lakeNav"
@@ -29,7 +36,7 @@
       </button>
 
       <div class="collapse navbar-collapse" id="lakeNav">
-        <ul class="navbar-nav ms-auto gap-2">
+        <ul class="navbar-nav ms-auto gap-2 align-items-lg-center">
           {% if current_user.is_authenticated %}
           {% if current_user.is_admin %}
           <li class="nav-item">
@@ -55,7 +62,7 @@
     </div>
   </nav>
 
-  <main class="container py-4 {% if request.endpoint in ['routes.login', 'routes.register'] %}auth-container{% endif %}">
+  <main class="container-fluid py-3 py-lg-4 px-3 px-lg-4 {% if request.endpoint in ['routes.login', 'routes.register'] %}auth-container{% endif %}">
     {% with messages = get_flashed_messages(with_categories=True) %}
       {% if messages %}
         <div class="mb-3">
@@ -73,7 +80,32 @@
       {% endif %}
     {% endwith %}
 
-    {% block content %}{% endblock %}
+    {% if request.endpoint in ['routes.login', 'routes.register'] %}
+      <div class="layout-shell">
+        {% block content %}{% endblock %}
+      </div>
+    {% else %}
+      <div class="layout-shell">
+        <div class="row g-3 g-lg-4 align-items-start">
+
+          {# Left rail (threads placeholder) #}
+          <aside class="col-lg-3 col-xl-2 d-none d-lg-block">
+            {% include 'components/_sidebar_left.html' %}
+          </aside>
+
+          {# Center content #}
+          <section class="col-12 col-lg-6 col-xl-7">
+            {% block content %}{% endblock %}
+          </section>
+
+          {# Right rail (user panel) #}
+          <aside class="col-lg-3 col-xl-3 d-none d-lg-block">
+            {% include 'components/_sidebar_right.html' %}
+          </aside>
+
+        </div>
+      </div>
+    {% endif %}
   </main>
 
   <script

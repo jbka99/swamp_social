@@ -1,49 +1,59 @@
 /* static/style.css
-   SWAMP — Nature/Eco palette on top of Bootstrap 5 (dark)
-   Philosophy: dark swamp surfaces + moss accent + warm earth highlights.
+   SWAMP — Nature/Eco palette on top of Bootstrap 5.
+
+   Current goal (v1):
+   - move away from "heavy dark" to a readable light theme
+   - keep accent green, keep contrasts accessible
+   - stay compatible with existing templates that still use bg-black/border-secondary
 */
 
 :root{
-  /* Core palette */
-  --swamp-bg: #070b08;        /* deep peat */
-  --swamp-surface: #0d1410;   /* wet soil */
-  --swamp-surface-2: #0f1b14; /* darker moss tint */
-  --swamp-border: #263229;    /* reed/bark */
-  --swamp-text: #e6efe8;      /* misty light */
-  --swamp-muted: #a7b6aa;     /* fogged text */
+  /* Light theme (default) */
+  --swamp-bg: #f5f7f5;        /* paper */
+  --swamp-surface: #ffffff;   /* cards */
+  --swamp-surface-2: #eef3ef; /* subtle fill */
+  --swamp-border: #d7dfd8;    /* soft divider */
+  --swamp-text: #1c241e;      /* main text */
+  --swamp-muted: #5a6a5e;     /* secondary text */
 
   /* Accents */
-  --swamp-accent: #3ad17a;    /* moss green */
-  --swamp-accent-2: #8fdc6a;  /* young leaf */
-  --swamp-warm: #c8a06a;      /* warm earth */
-  --swamp-danger: #ff5b6e;    /* readable on dark */
+  --swamp-accent: #2f8f5b;
+  --swamp-accent-2: #256f47;
+  --swamp-warm: #b07a3a;
+  --swamp-danger: #c62828;
 
   /* Effects */
-  --swamp-ring: 0 0 0 .20rem rgba(58, 209, 122, 0.18);
-  --swamp-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  --swamp-ring: 0 0 0 .20rem rgba(47, 143, 91, 0.20);
+  --swamp-shadow: 0 10px 30px rgba(16, 24, 16, 0.10);
 }
 
 /* ===== Base ===== */
 body{
   background:
-    radial-gradient(1200px 600px at 25% -10%, rgba(58,209,122,0.16), transparent 60%),
-    radial-gradient(900px 520px at 85% 0%, rgba(143,220,106,0.10), transparent 55%),
-    radial-gradient(900px 500px at 60% 120%, rgba(200,160,106,0.06), transparent 60%),
+    radial-gradient(1200px 600px at 25% -10%, rgba(47,143,91,0.10), transparent 60%),
+    radial-gradient(900px 520px at 85% 0%, rgba(176,122,58,0.06), transparent 55%),
     var(--swamp-bg) !important;
   color: var(--swamp-text);
 }
 
-/* Use a calmer default for muted text */
-.text-secondary{
-  color: var(--swamp-muted) !important;
+.layout-shell{
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-/* ===== Navbar ===== */
-.navbar{
-  backdrop-filter: blur(6px);
+.sidebar-card{
+  position: sticky;
+  top: 88px; /* navbar height-ish */
 }
+
+/* Use a calmer default for muted text */
+.text-secondary{ color: var(--swamp-muted) !important; }
+
+/* ===== Navbar ===== */
+.navbar{ backdrop-filter: blur(6px); }
 .navbar.bg-black{
-  background-color: rgba(0,0,0,0.72) !important;
+  /* compatibility: templates still use bg-black */
+  background-color: rgba(255,255,255,0.80) !important;
 }
 .navbar .navbar-brand{
   letter-spacing: .08em;
@@ -54,85 +64,81 @@ body{
   box-shadow: none;
   transition: transform .10s ease, border-color .10s ease, box-shadow .10s ease;
 }
-.card.bg-black{
-  background-color: rgba(0,0,0,0.55) !important;
-}
+.card{ background-color: var(--swamp-surface); }
+.card.bg-black{ background-color: var(--swamp-surface) !important; }
 .card:hover{
   transform: translateY(-1px);
-  border-color: rgba(58,209,122,0.35) !important;
-  box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+  border-color: rgba(47,143,91,0.28) !important;
+  box-shadow: var(--swamp-shadow);
 }
+
+/* Bootstrap compatibility helpers */
+.bg-black{ background-color: var(--swamp-surface) !important; }
+.border-secondary{ border-color: var(--swamp-border) !important; }
+.text-light, .text-light-emphasis{ color: var(--swamp-text) !important; }
 
 /* ===== Links ===== */
-a{
-  color: rgba(230,239,232,0.95);
-}
-a:hover{
-  color: #ffffff;
-}
+a{ color: var(--swamp-text); }
+a:hover{ color: #000; }
 
 /* Accent link option (if you use link-success etc.) */
-.link-success, .text-success{
-  color: var(--swamp-accent) !important;
-}
-.link-success:hover{
-  color: var(--swamp-accent-2) !important;
-}
+.link-success, .text-success{ color: var(--swamp-accent) !important; }
+.link-success:hover{ color: var(--swamp-accent-2) !important; }
 
 /* ===== Forms ===== */
 .form-control,
 .form-select{
-  background-color: #0a100c;
+  background-color: var(--swamp-surface);
   border-color: var(--swamp-border);
   color: var(--swamp-text);
 }
 .form-control::placeholder,
 textarea.form-control::placeholder{
-  color: rgba(230,239,232,0.42);
+  color: rgba(28,36,30,0.40);
 }
 .form-control:focus,
 .form-select:focus{
-  border-color: rgba(58,209,122,0.70);
+  border-color: rgba(47,143,91,0.55);
   box-shadow: var(--swamp-ring);
 }
 .form-text{
-  color: rgba(167,182,170,0.85) !important;
+  color: rgba(90,106,94,0.90) !important;
 }
 
 /* ===== Buttons (Bootstrap overrides) ===== */
 .btn-success{
   background-color: var(--swamp-accent);
   border-color: var(--swamp-accent);
-  color: #07110b;
+  color: #fff;
   font-weight: 600;
 }
 .btn-success:hover{
   background-color: var(--swamp-accent-2);
   border-color: var(--swamp-accent-2);
-  color: #07110b;
+  color: #fff;
 }
 .btn-success:focus{
   box-shadow: var(--swamp-ring);
 }
 
 .btn-outline-success{
-  border-color: rgba(58,209,122,0.60);
-  color: var(--swamp-text);
+  border-color: rgba(47,143,91,0.45);
+  color: var(--swamp-accent-2);
 }
 .btn-outline-success:hover{
-  border-color: rgba(58,209,122,0.95);
-  background-color: rgba(58,209,122,0.10);
-  color: #ffffff;
+  border-color: rgba(47,143,91,0.80);
+  background-color: rgba(47,143,91,0.08);
+  color: var(--swamp-accent-2);
 }
 
 .btn-outline-danger{
-  border-color: rgba(255,91,110,0.65);
-  color: rgba(255,91,110,0.95);
+  border-color: rgba(198,40,40,0.55);
+  color: rgba(198,40,40,0.95);
 }
 .btn-outline-danger:hover{
-  border-color: rgba(255,91,110,1);
-  background-color: rgba(255,91,110,0.12);
-  color: #fff;
+  border-color: rgba(198,40,40,0.90);
+  background-color: rgba(198,40,40,0.08);
+  color: rgba(198,40,40,1);
 }
 
 /* ===== Alerts ===== */
@@ -141,40 +147,50 @@ textarea.form-control::placeholder{
   box-shadow: none;
 }
 .alert-success{
-  background-color: rgba(58,209,122,0.10);
-  border-color: rgba(58,209,122,0.35);
-  color: var(--swamp-text);
+  background-color: rgba(47,143,91,0.08);
+  border-color: rgba(47,143,91,0.22);
 }
 .alert-danger{
-  background-color: rgba(255,91,110,0.10);
-  border-color: rgba(255,91,110,0.35);
-  color: var(--swamp-text);
+  background-color: rgba(198,40,40,0.06);
+  border-color: rgba(198,40,40,0.22);
 }
 .alert-warning{
-  background-color: rgba(200,160,106,0.10);
-  border-color: rgba(200,160,106,0.35);
-  color: var(--swamp-text);
+  background-color: rgba(176,122,58,0.08);
+  border-color: rgba(176,122,58,0.22);
 }
 
 /* ===== Pagination ===== */
 .pagination .page-link{
-  background-color: #0a100c;
+  background-color: var(--swamp-surface);
   border-color: var(--swamp-border);
   color: var(--swamp-text);
 }
 .pagination .page-link:hover{
-  border-color: rgba(58,209,122,0.50);
+  border-color: rgba(47,143,91,0.40);
 }
 .pagination .page-item.disabled .page-link{
-  color: rgba(230,239,232,0.35);
-  background-color: #0a100c;
+  color: rgba(28,36,30,0.35);
+  background-color: var(--swamp-surface);
   border-color: var(--swamp-border);
+}
+
+/* List groups (sidebars) */
+.list-group-item{
+  border: 0;
+  background: transparent;
+  color: var(--swamp-text);
+}
+.list-group-item:hover{
+  background: rgba(47,143,91,0.06);
 }
 
 /* ===== Post card helpers ===== */
 .posts-list .card-body{
   overflow-wrap: anywhere;
 }
+.post-card .card-body{ padding-left: 1rem; padding-right: 1rem; }
+.post-card p{ font-size: .95rem; }
+.post-card .text-secondary{ font-size: .82rem; }
 .btn[aria-label="Удалить пост"]{
   line-height: 1;
   padding: .25rem .55rem;
