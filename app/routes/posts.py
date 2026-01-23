@@ -37,7 +37,8 @@ def index():
         else:
             flash('Пост не может быть пустым', 'danger')
         return redirect(url_for('routes.index'))
-    return render_template("index.html")
+    
+    return render_template("index.html", user=current_user)
     
 @bp.route('/feed')
 @login_required
