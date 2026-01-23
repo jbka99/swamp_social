@@ -14,6 +14,7 @@
   >
 
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
 </head>
 
 <body class="bg-dark text-light">
@@ -75,5 +76,52 @@
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
     crossorigin="anonymous"
   ></script>
+  <script>
+  // Toggle button label for Bootstrap collapse ("Show more" <-> "Hide")
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".collapse").forEach((el) => {
+      const id = el.id;
+      if (!id) return;
+
+      const btn = document.querySelector(`[data-bs-target="#${CSS.escape(id)}"].js-toggle-collapse`);
+      if (!btn) return;
+
+      const textShow = btn.getAttribute("data-text-show") || "Показать полностью";
+      const textHide = btn.getAttribute("data-text-hide") || "Скрыть";
+
+      const preview = document.getElementById(id.replace("-full", "-preview"));
+
+      el.addEventListener("shown.bs.collapse", () => {
+        btn.textContent = textHide;
+        btn.setAttribute("aria-expanded", "true");
+        if (preview) preview.style.display = "none";
+      });
+
+      el.addEventListener("hidden.bs.collapse", () => {
+        btn.textContent = textShow;
+        btn.setAttribute("aria-expanded", "false");
+        if (preview) preview.style.display = "";
+      });
+    });
+  });
+</script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/auto-animate/0.9.0/index.min.js"></script>
+
+<script>
+  // AOS: анимации при скролле
+  AOS.init({
+    duration: 500,
+    easing: "ease-out-cubic",
+    once: true,
+    offset: 60
+  });
+
+  // AutoAnimate: анимации любых DOM-изменений внутри контейнера
+  document.querySelectorAll("[data-autoanimate]").forEach((el) => {
+    autoAnimate(el, { duration: 180, easing: "ease-in-out" });
+  });
+</script>
+
 </body>
 </html>
