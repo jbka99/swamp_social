@@ -75,23 +75,32 @@ def admin_bulk_delete_users(
     if not actor_is_admin:
         return BulkDeleteUsersResult(deleted=False, deleted_count=0, reason="forbidden")
 
-    ids = []
+    actor_id = int(actor_user_id)
+
+    ids: list[int] = []
     for x in target_user_ids:
         try:
             ids.append(int(x))
         except (TypeError, ValueError):
             continue
 
-    ids = [x for x in ids if x != int(actor_user_id)]
+    # unique + skip actor
+    ids = sorted({x for x in ids if x != actor_id})
 
     if not ids:
         return BulkDeleteUsersResult(deleted=False, deleted_count=0, reason="empty")
-    
-    Post.query.filter(Post.user_id.in_(ids)).delete(synchronize_session=False)
-    deleted_users = User.query.filter(User.id.in_(ids)).delete(synchronize_session=False)
-    db.session.commit()
 
-    return BulkDeleteUsersResult(deleted=True, deleted_count=int(deleted_users or 0), reason="ok")
+    # load targets and delete via ORM (stable for session/tests)
+    users = User.query.filter(User.id.in_(ids)).all()
+
+    # delete posts first (fast path)
+    Post.query.filter(Post.user_id.in_([u.id for u in users])).delete(synchronize_session=False)
+
+    for u in users:
+        db.session.delete(u)
+
+    db.session.commit()
+    return BulkDeleteUsersResult(deleted=True, deleted_count=len(users), reason="ok")
 
 # Количество постов на странице
 def get_main_feed(page: int = 1, per_page: int = 20):

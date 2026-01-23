@@ -82,7 +82,7 @@
 
     {% if request.endpoint in ['routes.login', 'routes.register'] %}
       <div class="layout-shell">
-        {% block content %}{% endblock %}
+        {{ self.content() }}
       </div>
     {% else %}
       <div class="layout-shell">
@@ -95,7 +95,7 @@
 
           {# Center content #}
           <section class="col-12 col-lg-6 col-xl-7">
-            {% block content %}{% endblock %}
+            {{ self.content() }}
           </section>
 
           {# Right rail (user panel) #}
@@ -106,6 +106,8 @@
         </div>
       </div>
     {% endif %}
+  {# single definition for child templates #}
+  {% block content %}{% endblock %}
   </main>
 
   <script
