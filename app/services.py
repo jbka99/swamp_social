@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from app.extensions import db
 from app.models import Post
 from typing import Optional
+from datetime import datetime, timedelta, timezone
+from sqlalchemy import func
 
 def get_main_feed(page: int = 1, per_page: int = 20):
     page = max(int(page), 1)
@@ -39,8 +41,18 @@ class CreatePostResult:
 
 def create_post(user_id: int, title: str, content: str) -> CreatePostResult:
 
+    MAX_TITLE_LEN = 100
+    MAX_CONTENT_LEN = 2000
+    POSTS_PER_MINUTE = 5
+
     content = (content or "").strip()
     title = (title or "").strip()
+
+    if len(title) > MAX_TITLE_LEN:
+        return CreatePostResult(created=False, post_id=None, reason="too_long_title")
+    
+    if len(content) > MAX_CONTENT_LEN:
+        return CreatePostResult(created=False, post_id=None, reason="too_long_content")
 
     if not content:
         return CreatePostResult(created=False, post_id=None, reason="empty_content")
@@ -48,6 +60,22 @@ def create_post(user_id: int, title: str, content: str) -> CreatePostResult:
     # Если title пустой, чтобы не падало заглушка
     if not title:
         title = "Без названия"
+
+    now = datetime.now(timezone.utc)
+    window_start = now - timedelta(seconds=60)
+    
+    count = (
+        db.session
+        .query(func.count(Post.id))
+        .filter(
+            Post.user_id == user_id,
+            Post.date_posted >= window_start
+        )
+        .scalar()
+    )
+
+    if count >= POSTS_PER_MINUTE:
+        return CreatePostResult(created=False, post_id=None, reason="rate_limited")
 
     post = Post(title=title, content=content, user_id=user_id)
     db.session.add(post)

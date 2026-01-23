@@ -34,8 +34,15 @@ def index():
 
         if result.created:
             flash('Пост успешно создан', 'success')
-        else:
+        elif result.reason == "empty_content":
             flash('Пост не может быть пустым', 'danger')
+        elif result.reason == "too_long_title":
+            flash('Заголовок поста слишком длинный', 'danger')
+        elif result.reason == "too_long_content":
+            flash('Пост слишком длинный', 'danger')
+        elif result.reason == "rate_limited":
+            flash('Слишком много постов, подождите минутку', 'warning')
+
         return redirect(url_for('routes.index'))
     
     return render_template("index.html", user=current_user)

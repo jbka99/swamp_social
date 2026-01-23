@@ -42,7 +42,6 @@
         </div>
 
         <div class="mt-4 d-grid gap-2">
-          <a class="btn btn-outline-secondary" href="{{ url_for('routes.feed') }}">В ленту</a>
 
           {% if current_user.is_authenticated and user.username == current_user.username %}
             <a class="btn btn-outline-success" href="{{ url_for('routes.index') }}">Мой профиль</a>
