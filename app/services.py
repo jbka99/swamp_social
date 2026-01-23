@@ -89,7 +89,7 @@ def admin_bulk_delete_users(
     
     Post.query.filter(Post.user_id.in_(ids)).delete(synchronize_session=False)
     deleted_users = User.query.filter(User.id.in_(ids)).delete(synchronize_session=False)
-    db.session.commit
+    db.session.commit()
 
     return BulkDeleteUsersResult(deleted=True, deleted_count=int(deleted_users or 0), reason="ok")
 
