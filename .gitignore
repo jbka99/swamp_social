@@ -1,6 +1,29 @@
-.env
+# Python
 __pycache__/
-*.pyc
-instance/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
 venv/
+.env/
+.env.*
+
+# Flask
+instance/
+*.db
+*.sqlite3
+
+# Migrations cache
+migrations/versions/__pycache__/
+
+# Pytest
+.pytest_cache/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
 .DS_Store
+Thumbs.db
