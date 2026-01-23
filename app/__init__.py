@@ -22,8 +22,13 @@ def create_app(config_class=Config):
         if current_user.is_authenticated:
             ensure_admin_flag(current_user)
 
-    with app.app_context():
-        from app.models import User, Post
-        db.create_all()
+    # IMPORTANT:
+    # Don't auto-create tables in production. Use Alembic migrations (`flask db upgrade`).
+    # Auto-creating tables masks migration issues and does not apply schema changes.
+    # If you want auto-create for local dev, set AUTO_CREATE_DB=1.
+    if app.config.get("AUTO_CREATE_DB"):
+        with app.app_context():
+            from app.models import User, Post
+            db.create_all()
 
     return app
