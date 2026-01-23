@@ -1,98 +1,189 @@
 /* static/style.css
-   Minimal theme layer on top of Bootstrap 5 (dark).
-   Goal: no global layout overrides, only gentle styling.
+   SWAMP — Nature/Eco palette on top of Bootstrap 5 (dark)
+   Philosophy: dark swamp surfaces + moss accent + warm earth highlights.
 */
 
 :root{
-  --lake-bg: #0b0f0c;
-  --lake-surface: #0f1411;
-  --lake-border: #2a2f2c;
-  --lake-text-muted: #a7b0a9;
-  --lake-accent: #2ecc71;
+  /* Core palette */
+  --swamp-bg: #070b08;        /* deep peat */
+  --swamp-surface: #0d1410;   /* wet soil */
+  --swamp-surface-2: #0f1b14; /* darker moss tint */
+  --swamp-border: #263229;    /* reed/bark */
+  --swamp-text: #e6efe8;      /* misty light */
+  --swamp-muted: #a7b6aa;     /* fogged text */
+
+  /* Accents */
+  --swamp-accent: #3ad17a;    /* moss green */
+  --swamp-accent-2: #8fdc6a;  /* young leaf */
+  --swamp-warm: #c8a06a;      /* warm earth */
+  --swamp-danger: #ff5b6e;    /* readable on dark */
+
+  /* Effects */
+  --swamp-ring: 0 0 0 .20rem rgba(58, 209, 122, 0.18);
+  --swamp-shadow: 0 10px 30px rgba(0,0,0,0.35);
 }
 
-/* Base */
+/* ===== Base ===== */
 body{
-  background: radial-gradient(1200px 600px at 30% -10%, rgba(46,204,113,0.18), transparent 60%),
-              radial-gradient(900px 500px at 90% 0%, rgba(46,204,113,0.10), transparent 55%),
-              var(--lake-bg) !important;
+  background:
+    radial-gradient(1200px 600px at 25% -10%, rgba(58,209,122,0.16), transparent 60%),
+    radial-gradient(900px 520px at 85% 0%, rgba(143,220,106,0.10), transparent 55%),
+    radial-gradient(900px 500px at 60% 120%, rgba(200,160,106,0.06), transparent 60%),
+    var(--swamp-bg) !important;
+  color: var(--swamp-text);
 }
 
-/* Make Bootstrap dark controls look consistent */
-.form-control,
-.form-select,
-.form-control:disabled,
-.form-select:disabled{
-  background-color: #0d1110;
-  border-color: var(--lake-border);
-  color: #e9f0ea;
+/* Use a calmer default for muted text */
+.text-secondary{
+  color: var(--swamp-muted) !important;
 }
 
-.form-control::placeholder,
-textarea.form-control::placeholder{
-  color: rgba(233, 240, 234, 0.45);
+/* ===== Navbar ===== */
+.navbar{
+  backdrop-filter: blur(6px);
+}
+.navbar.bg-black{
+  background-color: rgba(0,0,0,0.72) !important;
+}
+.navbar .navbar-brand{
+  letter-spacing: .08em;
 }
 
-.form-control:focus,
-.form-select:focus{
-  border-color: rgba(46,204,113,0.65);
-  box-shadow: 0 0 0 .20rem rgba(46,204,113,0.18);
-}
-
-/* Cards used in templates already have bg-black and border-secondary.
-   Add a subtle hover to make feed feel alive. */
+/* ===== Cards ===== */
 .card{
-  transition: transform .10s ease, border-color .10s ease;
+  box-shadow: none;
+  transition: transform .10s ease, border-color .10s ease, box-shadow .10s ease;
 }
-
+.card.bg-black{
+  background-color: rgba(0,0,0,0.55) !important;
+}
 .card:hover{
   transform: translateY(-1px);
-  border-color: rgba(46,204,113,0.35) !important;
+  border-color: rgba(58,209,122,0.35) !important;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.35);
 }
 
-/* Links */
+/* ===== Links ===== */
 a{
-  color: #d7efe0;
+  color: rgba(230,239,232,0.95);
 }
-
 a:hover{
   color: #ffffff;
 }
 
-/* Buttons: keep Bootstrap, only tweak outline-success readability on dark */
+/* Accent link option (if you use link-success etc.) */
+.link-success, .text-success{
+  color: var(--swamp-accent) !important;
+}
+.link-success:hover{
+  color: var(--swamp-accent-2) !important;
+}
+
+/* ===== Forms ===== */
+.form-control,
+.form-select{
+  background-color: #0a100c;
+  border-color: var(--swamp-border);
+  color: var(--swamp-text);
+}
+.form-control::placeholder,
+textarea.form-control::placeholder{
+  color: rgba(230,239,232,0.42);
+}
+.form-control:focus,
+.form-select:focus{
+  border-color: rgba(58,209,122,0.70);
+  box-shadow: var(--swamp-ring);
+}
+.form-text{
+  color: rgba(167,182,170,0.85) !important;
+}
+
+/* ===== Buttons (Bootstrap overrides) ===== */
+.btn-success{
+  background-color: var(--swamp-accent);
+  border-color: var(--swamp-accent);
+  color: #07110b;
+  font-weight: 600;
+}
+.btn-success:hover{
+  background-color: var(--swamp-accent-2);
+  border-color: var(--swamp-accent-2);
+  color: #07110b;
+}
+.btn-success:focus{
+  box-shadow: var(--swamp-ring);
+}
+
 .btn-outline-success{
-  border-color: rgba(46,204,113,0.55);
-  color: #d7efe0;
+  border-color: rgba(58,209,122,0.60);
+  color: var(--swamp-text);
 }
-
 .btn-outline-success:hover{
-  border-color: rgba(46,204,113,0.85);
+  border-color: rgba(58,209,122,0.95);
+  background-color: rgba(58,209,122,0.10);
+  color: #ffffff;
 }
 
-/* Pagination dark */
+.btn-outline-danger{
+  border-color: rgba(255,91,110,0.65);
+  color: rgba(255,91,110,0.95);
+}
+.btn-outline-danger:hover{
+  border-color: rgba(255,91,110,1);
+  background-color: rgba(255,91,110,0.12);
+  color: #fff;
+}
+
+/* ===== Alerts ===== */
+.alert{
+  border: 1px solid var(--swamp-border);
+  box-shadow: none;
+}
+.alert-success{
+  background-color: rgba(58,209,122,0.10);
+  border-color: rgba(58,209,122,0.35);
+  color: var(--swamp-text);
+}
+.alert-danger{
+  background-color: rgba(255,91,110,0.10);
+  border-color: rgba(255,91,110,0.35);
+  color: var(--swamp-text);
+}
+.alert-warning{
+  background-color: rgba(200,160,106,0.10);
+  border-color: rgba(200,160,106,0.35);
+  color: var(--swamp-text);
+}
+
+/* ===== Pagination ===== */
 .pagination .page-link{
-  background-color: #0d1110;
-  border-color: var(--lake-border);
-  color: #e9f0ea;
+  background-color: #0a100c;
+  border-color: var(--swamp-border);
+  color: var(--swamp-text);
 }
-
 .pagination .page-link:hover{
-  border-color: rgba(46,204,113,0.45);
+  border-color: rgba(58,209,122,0.50);
 }
-
 .pagination .page-item.disabled .page-link{
-  color: rgba(233, 240, 234, 0.35);
-  background-color: #0d1110;
-  border-color: var(--lake-border);
+  color: rgba(230,239,232,0.35);
+  background-color: #0a100c;
+  border-color: var(--swamp-border);
 }
 
-/* Small helper so long text doesn't overflow */
+/* ===== Post card helpers ===== */
 .posts-list .card-body{
   overflow-wrap: anywhere;
 }
-
-/* Make “×” delete button look centered */
 .btn[aria-label="Удалить пост"]{
   line-height: 1;
   padding: .25rem .55rem;
+}
+
+/* ===== Motion safety ===== */
+@media (prefers-reduced-motion: reduce){
+  *{
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }
