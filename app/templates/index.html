@@ -3,105 +3,51 @@
 {% block title %}Профиль{% endblock %}
 
 {% block content %}
-{# страховка: если по какой-то причине user не передали #}
-{% set u = user if user is defined else current_user %}
+{# профиль и действия теперь в правой панели; здесь — только контент #}
 
-<div class="row g-4">
-
-  <!-- Профиль -->
-  <div class="col-12 col-lg-4">
-    <div class="card bg-black border border-secondary shadow-sm">
-      <div class="card-body">
-
-        <div class="d-flex align-items-center gap-3">
-          <img
-            src="{{ u.avatar_url if u.avatar_url else 'https://api.dicebear.com/7.x/identicon/svg?seed=' + u.username }}"
-            alt="Avatar"
-            class="rounded-circle border border-secondary"
-            style="width: 72px; height: 72px; object-fit: cover;"
-            referrerpolicy="no-referrer"
-          >
-
-          <div class="flex-grow-1">
-            <div class="h5 mb-0 fw-bold">
-              {{ u.display_name or u.username }}
-            </div>
-            <div class="text-secondary small">
-              @{{ u.username }}
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-3 d-grid gap-2">
-          <a href="{{ url_for('routes.settings') }}" class="btn btn-outline-success">
-            Редактировать профиль
-          </a>
-        </div>
-
-        <hr class="border-secondary my-4">
-
-        <div class="text-secondary small mb-1">Возраст</div>
-        <div class="mb-3">
-          {{ u.age or 'не указан' }}
-        </div>
-
-        <div class="text-secondary small mb-1">О себе</div>
-        <div class="text-light-emphasis" style="white-space: pre-wrap;">
-          {{ u.bio or 'Тут пока пусто...' }}
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- Создать пост + мои посты -->
-  <div class="col-12 col-lg-8">
-
-    <!-- Создание поста -->
-    <div class="card bg-black border border-secondary shadow-sm mb-4">
-      <div class="card-body">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <div class="h5 mb-0 fw-bold">Что нового?</div>
-        </div>
-
-        <form method="POST" action="{{ url_for('routes.index') }}" class="d-grid gap-3">
-          <div>
-            <label class="form-label text-secondary">Заголовок</label>
-            <input type="text" name="title" class="form-control" placeholder="О чём пост?" required>
-          </div>
-
-          <div>
-            <label class="form-label text-secondary">Текст</label>
-            <textarea name="body" class="form-control" placeholder="Ваши мысли..." rows="4" required></textarea>
-          </div>
-
-          <div class="d-flex justify-content-end">
-            <button type="submit" class="btn btn-success">
-              Опубликовать
-            </button>
-          </div>
-        </form>
-      </div>
+<!-- Создать пост -->
+<div class="card bg-black border border-secondary shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div class="h5 mb-0 fw-bold">Что нового?</div>
     </div>
 
-    <!-- Мои посты -->
-    <div class="d-flex align-items-center justify-content-between mb-2">
-      <div class="h5 mb-0 fw-bold">Мои записи</div>
-    </div>
-    {% if posts is defined and posts and posts|length > 0 %}
-      <div class="posts-list">
-        {% for post in posts %}
-          {% include "components/_post_card.html" %}
-        {% endfor %}
+    <form method="POST" action="{{ url_for('routes.index') }}" class="d-grid gap-3">
+      <div>
+        <label class="form-label text-secondary">Заголовок</label>
+        <input type="text" name="title" class="form-control" placeholder="О чём пост?" required>
       </div>
-    {% else %}
-      <div class="card bg-black border border-secondary shadow-sm">
-        <div class="card-body text-secondary">
-          У вас ещё нет постов.
-        </div>
-      </div>
-    {% endif %}
 
+      <div>
+        <label class="form-label text-secondary">Текст</label>
+        <textarea name="body" class="form-control" placeholder="Ваши мысли..." rows="4" required></textarea>
+      </div>
+
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-success">
+          Опубликовать
+        </button>
+      </div>
+    </form>
   </div>
 </div>
+
+<!-- Мои посты -->
+<div class="d-flex align-items-center justify-content-between mb-2">
+  <div class="h5 mb-0 fw-bold">Мои записи</div>
+</div>
+
+{% if posts is defined and posts and posts|length > 0 %}
+  <div class="posts-list">
+    {% for post in posts %}
+      {% include "components/_post_card.html" %}
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card bg-black border border-secondary shadow-sm">
+    <div class="card-body text-secondary">
+      У вас ещё нет постов.
+    </div>
+  </div>
+{% endif %}
 {% endblock %}

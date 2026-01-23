@@ -60,12 +60,13 @@
 
           <div>
             <label class="form-label text-secondary">О себе</label>
+            {# IMPORTANT: keep textarea value inline (no leading newline/indent) #}
             <textarea
               name="bio"
               class="form-control"
               rows="5"
               placeholder="Расскажите о себе..."
-            >{{ user.bio or '' }}</textarea>
+            >{{ (user.bio or '')|trim }}</textarea>
           </div>
 
           <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end pt-2">

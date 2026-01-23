@@ -8,30 +8,31 @@
 */
 
 :root{
-  /* Light theme (default) */
-  --swamp-bg: #f5f7f5;        /* paper */
-  --swamp-surface: #ffffff;   /* cards */
-  --swamp-surface-2: #eef3ef; /* subtle fill */
-  --swamp-border: #d7dfd8;    /* soft divider */
-  --swamp-text: #1c241e;      /* main text */
-  --swamp-muted: #5a6a5e;     /* secondary text */
+  /* Palette 4604 (soft eco) */
+  --swamp-bg: #DEE6C3;         /* pale olive background */
+  --swamp-surface: #F6F8E6;    /* cards */
+  --swamp-surface-2: #D6DEB5;  /* subtle fills */
+  --swamp-border: rgba(140,162,123,0.55);
+  --swamp-text: #0B131C;       /* deep ink */
+  --swamp-muted: #355A47;      /* swamp green */
 
   /* Accents */
-  --swamp-accent: #2f8f5b;
-  --swamp-accent-2: #256f47;
-  --swamp-warm: #b07a3a;
-  --swamp-danger: #c62828;
+  --swamp-accent: #355A47;     /* primary */
+  --swamp-accent-2: #2B4B3B;   /* hover */
+  --swamp-warm: #8CA27B;       /* secondary */
+  --swamp-danger: #D3503A;     /* alizarin */
 
   /* Effects */
-  --swamp-ring: 0 0 0 .20rem rgba(47, 143, 91, 0.20);
-  --swamp-shadow: 0 10px 30px rgba(16, 24, 16, 0.10);
+  --swamp-ring: 0 0 0 .20rem rgba(53,90,71,0.22);
+  --swamp-shadow: 0 10px 30px rgba(11,19,28,0.10);
 }
+
 
 /* ===== Base ===== */
 body{
   background:
-    radial-gradient(1200px 600px at 25% -10%, rgba(47,143,91,0.10), transparent 60%),
-    radial-gradient(900px 520px at 85% 0%, rgba(176,122,58,0.06), transparent 55%),
+    radial-gradient(1200px 600px at 25% -10%, rgba(53,90,71,0.18), transparent 60%),
+    radial-gradient(900px 520px at 85% 0%, rgba(211,80,58,0.10), transparent 55%),
     var(--swamp-bg) !important;
   color: var(--swamp-text);
 }
@@ -53,7 +54,7 @@ body{
 .navbar{ backdrop-filter: blur(6px); }
 .navbar.bg-black{
   /* compatibility: templates still use bg-black */
-  background-color: rgba(255,255,255,0.80) !important;
+  background-color: rgba(246,248,230,0.78) !important;
 }
 .navbar .navbar-brand{
   letter-spacing: .08em;
@@ -79,7 +80,7 @@ body{
 
 /* ===== Links ===== */
 a{ color: var(--swamp-text); }
-a:hover{ color: #000; }
+a:hover{ color: var(--swamp-accent); }
 
 /* Accent link option (if you use link-success etc.) */
 .link-success, .text-success{ color: var(--swamp-accent) !important; }

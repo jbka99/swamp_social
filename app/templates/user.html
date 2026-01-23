@@ -37,8 +37,9 @@
         </div>
 
         <div class="text-secondary small mb-1">О себе</div>
+        {% set bio = (user.bio or '')|trim %}
         <div class="text-light-emphasis" style="white-space: pre-wrap;">
-          {{ user.bio or 'Пользователь еще ничего не рассказал о себе.' }}
+          {{ bio if bio else 'Пользователь еще ничего не рассказал о себе.' }}
         </div>
 
         <div class="mt-4 d-grid gap-2">

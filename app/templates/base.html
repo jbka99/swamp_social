@@ -26,42 +26,14 @@
 
 <body class="swamp theme-light">
 
-  <nav class="navbar navbar-expand-lg navbar-light bg-black border-bottom border-secondary">
-    <div class="container-fluid px-3 px-lg-4">
-      <a class="navbar-brand fw-bold" href="{{ url_for('routes.feed') }}">SWAMP</a>
-
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#lakeNav"
-              aria-controls="lakeNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="lakeNav">
-        <ul class="navbar-nav ms-auto gap-2 align-items-lg-center">
-          {% if current_user.is_authenticated %}
-            {% if current_user.is_admin %}
-              <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('routes.admin_users') }}">Админка</a>
-              </li>
-            {% endif %}
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('routes.index') }}">Профиль</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link text-danger" href="{{ url_for('routes.logout') }}">Выход</a>
-            </li>
-          {% else %}
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('routes.login') }}">Вход</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('routes.register') }}">Регистрация</a>
-            </li>
-          {% endif %}
-        </ul>
-      </div>
+    <nav class="navbar navbar-light bg-black border-bottom border-secondary">
+    <div class="container-fluid justify-content-center px-3 px-lg-4">
+      <a class="navbar-brand fw-bold m-0" href="{{ url_for('routes.feed') }}">
+        SWAMP
+      </a>
     </div>
   </nav>
-
+  
   <main class="container-fluid py-3 py-lg-4 px-3 px-lg-4 {% if request.endpoint in ['routes.login', 'routes.register'] %}auth-container{% endif %}">
     {% with messages = get_flashed_messages(with_categories=True) %}
       {% if messages %}
@@ -136,18 +108,14 @@
         const textShow = btn.getAttribute("data-text-show") || "Показать полностью";
         const textHide = btn.getAttribute("data-text-hide") || "Скрыть";
 
-        const preview = document.getElementById(id.replace("-full", "-preview"));
-
         el.addEventListener("shown.bs.collapse", () => {
           btn.textContent = textHide;
           btn.setAttribute("aria-expanded", "true");
-          if (preview) preview.style.display = "none";
         });
 
         el.addEventListener("hidden.bs.collapse", () => {
           btn.textContent = textShow;
           btn.setAttribute("aria-expanded", "false");
-          if (preview) preview.style.display = "";
         });
       });
     });
