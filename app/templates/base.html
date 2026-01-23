@@ -31,6 +31,9 @@
       <div class="collapse navbar-collapse" id="lakeNav">
         <ul class="navbar-nav ms-auto gap-2">
           {% if current_user.is_authenticated %}
+          <span class="text-muted small">
+    admin={{ current_user.is_admin }}
+  </span>
           {% if current_user.is_admin %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('routes.admin_users') }}">Админка</a>
