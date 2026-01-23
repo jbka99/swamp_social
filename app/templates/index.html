@@ -3,7 +3,32 @@
 {% block title %}Профиль{% endblock %}
 
 {% block content %}
-{# профиль и действия теперь в правой панели; здесь — только контент #}
+{# --- About me (index only) --- #}
+{% set bio = (current_user.bio or '')|trim %}
+{% if current_user.is_authenticated and (current_user.age or bio) %}
+  <div class="card border-secondary mb-3">
+    <div class="card-body py-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="m-0">О себе</h5>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('routes.settings') }}">
+          Редактировать
+        </a>
+      </div>
+
+      <div class="mt-2 small text-muted">
+        {% if current_user.age %}
+          <div>Возраст: <span class="text-body">{{ current_user.age }}</span></div>
+        {% endif %}
+      </div>
+
+      {% if bio %}
+        <div class="mt-2" style="white-space: pre-wrap;">{{ bio }}</div>
+      {% else %}
+        <div class="mt-2 text-muted">Пока пусто.</div>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
 
 <!-- Создать пост -->
 <div class="card bg-black border border-secondary shadow-sm mb-4">
@@ -31,6 +56,31 @@
     </form>
   </div>
 </div>
+
+<!-- О себе (кратко) -->
+{% if current_user.is_authenticated %}
+  {% set bio = (current_user.bio or '')|trim %}
+  {% if current_user.age or bio %}
+    <div class="card bg-black border border-secondary shadow-sm mb-4">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="h6 mb-0 fw-bold">О себе</div>
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('routes.settings') }}">Редактировать</a>
+        </div>
+
+        {% if current_user.age %}
+          <div class="small text-secondary mb-2">Возраст: <span class="text-body">{{ current_user.age }}</span></div>
+        {% endif %}
+
+        {% if bio %}
+          <div class="text-body" style="white-space: pre-wrap;">{{ bio }}</div>
+        {% else %}
+          <div class="text-secondary">Пока пусто.</div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+{% endif %}
 
 <!-- Мои посты -->
 <div class="d-flex align-items-center justify-content-between mb-2">
