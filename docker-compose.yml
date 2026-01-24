@@ -1,0 +1,20 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # локальная база (файл внутри контейнера)
+      DATABASE_URL: "sqlite:////app/instance/local.db"
+      SECRET_KEY: "dev-secret-key"
+      # если у тебя есть флаги авто-создания/сидов — можно включить
+      # AUTO_CREATE_DB: "1"
+      # ADMIN_USERNAMES: "admin"
+    volumes:
+      # монтируем проект внутрь контейнера для живых правок
+      - .:/app
+      # отдельный volume под sqlite, чтобы не терялась при пересборке
+      - swamp_instance:/app/instance
+
+volumes:
+  swamp_instance:
