@@ -1,27 +1,25 @@
-{#
-  Left sidebar (v1): placeholder for future "threads".
-  Goal: keep markup simple and semantics clear.
-#}
+<div class="sidebar">
+  <div class="sidebar__header d-flex align-items-center justify-content-between">
+    <h3 class="sidebar__title">Ветки</h3>
+    <span class="sidebar__badge">скоро</span>
+  </div>
 
-<div class="card border shadow-sm sidebar-card">
-  <div class="card-body">
-    <div class="d-flex align-items-center justify-content-between mb-2">
-      <div class="fw-semibold">Ветки</div>
-      <span class="badge text-bg-light border">скоро</span>
+  <div class="sidebar__body">
+    <div class="sidebar__section">
+      <div class="sidebar__muted">
+        Здесь будут разные темы как на крутых бордах (картинок всё ещё нет).
+      </div>
     </div>
 
-    <div class="small text-secondary mb-3">
-      Здесь появятся обсуждения по темам (как в каналах/папках).
-    </div>
+    <div class="sidebar__divider"></div>
 
-    <div class="list-group list-group-flush">
-      <a class="list-group-item list-group-item-action px-0" href="#" aria-disabled="true">
-        Общая лента
-        <span class="text-secondary">· по умолчанию</span>
-      </a>
-      <a class="list-group-item list-group-item-action px-0" href="#" aria-disabled="true">Работа</a>
-      <a class="list-group-item list-group-item-action px-0" href="#" aria-disabled="true">Идеи</a>
-      <a class="list-group-item list-group-item-action px-0" href="#" aria-disabled="true">Архив</a>
+    <div class="sidebar__section">
+      <ul class="sidebar__list">
+        <a class="sidebar__item" href="#">Общая лента · по умолчанию</a>
+        <a class="sidebar__item" href="#">·</a>
+        <a class="sidebar__item" href="#">·</a>
+        <a class="sidebar__item" href="#">·</a>
+      </ul>
     </div>
   </div>
 </div>
