@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from app.extensions import db
-from app.models import Thread, User, Update
+from app.models import Thread, User, Update, Comment
 from typing import Optional, Iterable
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
@@ -252,3 +252,28 @@ def list_updates(page: int = 1, per_page: int = 20):
     per_page = min(max(int(per_page), 1), 50)
     query = Update.query.order_by(Update.created_at.desc())
     return query.paginate(page=page, per_page=per_page, error_out=False)
+
+# Comment services
+
+def create_comment(*, thread_id: int, author_id: int, content: str, parent_id: Optional[int] = None):
+    content = (content or "").strip()
+    if not content:
+        return {"ok": False, "error": "empty", "comment_id": None}
+
+    thread = db.session.get(Thread, int(thread_id))
+    if thread is None:
+        return {"ok": False, "error": "not_found", "comment_id": None}
+
+    # If parent_id is provided, verify the parent comment exists and belongs to the same thread
+    if parent_id is not None:
+        parent_comment = db.session.get(Comment, int(parent_id))
+        if parent_comment is None:
+            return {"ok": False, "error": "parent_not_found", "comment_id": None}
+        if parent_comment.post_id != thread_id:
+            return {"ok": False, "error": "parent_mismatch", "comment_id": None}
+
+    # Thread.__tablename__ == 'post', so use post_id FK
+    comment = Comment(content=content, user_id=author_id, post_id=thread_id, parent_id=parent_id)
+    db.session.add(comment)
+    db.session.commit()
+    return {"ok": True, "error": None, "comment_id": comment.id} 

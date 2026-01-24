@@ -3,6 +3,18 @@
 {% block title %}{{ thread.title }}{% endblock %}
 
 {% block content %}
+<script>
+function toggleReplyForm(commentId) {
+  const form = document.getElementById('reply-form-' + commentId);
+  if (form.style.display === 'none') {
+    form.style.display = 'block';
+    form.querySelector('textarea').focus();
+  } else {
+    form.style.display = 'none';
+    form.querySelector('textarea').value = '';
+  }
+}
+</script>
 <div class="mb-3">
   <a href="{{ url_for('routes.threads') }}" class="btn btn-sm btn-outline-secondary mb-2">← Назад к тредам</a>
 </div>
@@ -61,9 +73,102 @@
 
 <div class="card bg-black border border-secondary shadow-sm">
   <div class="card-body py-3">
-    <div class="text-muted small">
-      Комментарии появятся здесь позже.
-    </div>
-  </div>
+    <h5 class="mb-3">Комментарии</h5>
+    
+    {# Comment form #}
+    {% if current_user.is_authenticated %}
+    <form method="post"
+         action="{{ url_for('routes.add_comment', thread_id=thread.id) }}"
+         class="mb-4">
+      <textarea name="content"
+           class="form-control bg-black text-light border-secondary mb-2"
+           rows="3"
+           placeholder="Ваш комментарий... (ответ: >>username)"
+           required></textarea>
+
+      <div class="d-flex justify-content-end">
+        <button class="btn btn-outline-light btn-sm" type="submit">
+          Комментировать
+        </button>
+      </div>
+    </form>
+    {# Comments list #}
+    {% if top_level_comments %}
+      {% macro render_comment(comment, depth=0, is_first=False) %}
+      <div class="d-flex gap-3 py-2 {% if depth > 0 %}ms-4 border-start border-secondary ps-3{% elif not is_first %}border-top border-secondary{% endif %}" 
+           id="comment-{{ comment.id }}">
+        <img src="{{ comment.author.avatar_url if comment.author.avatar_url else 'https://api.dicebear.com/7.x/identicon/svg?seed=' + comment.author.username }}"
+             alt="avatar"
+             class="rounded-circle"
+             style="width: 36px; height: 36px; object-fit: cover; flex-shrink: 0;">
+
+        <div class="flex-grow-1">
+          <div class="small text-muted mb-1">
+            <a href="{{ url_for('routes.user_profile', username=comment.author.username) }}"
+                class="text-decoration-none">
+                {{ comment.author.username }}
+            </a>
+            <span class="text-secondary"> · {{ comment.date_posted.strftime('%H:%M | %d.%m.%Y') }}</span>
+          </div>
+
+          <div class="mt-1 mb-2" style="white-space: pre-wrap; word-wrap: break-word;">
+            {{ comment.content|e }}
+          </div>
+
+          {# Reply button and form #}
+          {% if current_user.is_authenticated %}
+          <div class="mb-2">
+            <button class="btn btn-sm btn-outline-secondary" 
+                    type="button" 
+                    onclick="toggleReplyForm('{{ comment.id }}')">
+              Ответить
+            </button>
+          </div>
+          
+          {# Reply form (hidden by default) #}
+          <div id="reply-form-{{ comment.id }}" style="display: none;" class="mb-3">
+            <form method="post"
+                 action="{{ url_for('routes.add_comment', thread_id=thread.id) }}"
+                 class="mt-2">
+              <input type="hidden" name="parent_id" value="{{ comment.id }}">
+              <textarea name="content"
+                   class="form-control bg-black text-light border-secondary mb-2"
+                   rows="2"
+                   placeholder="Ответить @{{ comment.author.username }}..."
+                   required></textarea>
+
+              <div class="d-flex justify-content-end gap-2">
+                <button class="btn btn-sm btn-outline-secondary" 
+                        type="button" 
+                        onclick="toggleReplyForm('{{ comment.id }}')">
+                  Отмена
+                </button>
+                <button class="btn btn-sm btn-outline-light" type="submit">
+                  Отправить
+                </button>
+              </div>
+            </form>
+          </div>
+          {% endif %}
+
+          {# Render replies recursively #}
+          {% if comment.replies %}
+            {% for reply in comment.replies %}
+              {{ render_comment(reply, depth + 1, loop.first) }}
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+      {% endmacro %}
+
+      {% for c in top_level_comments %}
+        {{ render_comment(c, 0, loop.first) }}
+      {% endfor %}
+    {% else %}
+      <div class="text-muted small py-2">
+        Комментариев пока нет.
+      </div>
+    {% endif %}
+  {% endif %}
 </div>
 {% endblock %}

@@ -10,6 +10,8 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 class User(db.Model, UserMixin):
+    __tablename__ = 'user'
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(256))
@@ -48,19 +50,21 @@ class Thread(db.Model):
     def __repr__(self):
         return f"Thread('{self.title}', '{self.date_posted}')"
 
-# Keep Post alias for backward compatibility during transition
-Post = Thread
 
 class Comment(db.Model):
+    __tablename__ = 'comment'
+    
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    parent_id = db.Column(db.Integer, db.ForeignKey('comment.id'), nullable=True)
 
     author = db.relationship('User', lazy=True)
     thread = db.relationship('Thread', backref=db.backref('comments', lazy=True))
+    parent = db.relationship('Comment', remote_side=[id], backref=db.backref('replies', lazy=True))
 
     @property
     def post(self):
@@ -68,10 +72,11 @@ class Comment(db.Model):
         return self.thread
 
     def __repr__(self):
-        return f"<Comment {self.id} user={self.user_id} post={self.post_id}>"
+        return f"<Comment {self.id} user={self.user_id} post={self.post_id} parent={self.parent_id}>"
 
 class Update(db.Model):
-    __tablename__ = 'update'
+    __tablename__ = 'updates'
+    
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
