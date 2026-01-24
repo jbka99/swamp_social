@@ -281,15 +281,12 @@ textarea:focus{
 .sidebar, .sidebar * { text-rendering: optimizeLegibility; }
 
 /* ===== Theme accents for purple palette ===== */
-:root {
-  --sw-accent: #3500D3;        /* primary */
-  --sw-accent-2: #240090;      /* deep */
-  --sw-ink: #0C0032;           /* background */
-  --sw-text: rgba(255,255,255,.90);
-
-  --sw-danger: #C9184A;        /* not neon red */
+/* ===== Theme accents for purple palette (no overrides of --sw-ink) ===== */
+:root{
+  --sw-danger: #C9184A;
   --sw-danger-bg: rgba(201, 24, 74, .14);
-  --sw-success: #2D6A4F;       /* muted green */
+
+  --sw-success: #2D6A4F;
   --sw-success-bg: rgba(45, 106, 79, .14);
 }
 
@@ -349,4 +346,10 @@ textarea:focus{
   background: rgba(201, 24, 74, .22) !important;
   border-color: rgba(201, 24, 74, .75) !important;
   color: #fff !important;
+}
+
+/* Text blocks: keep newlines, but don't preserve "indent spaces" */
+.sw-textblock{
+  white-space: pre-line;
+  word-break: break-word;
 }

@@ -3,8 +3,10 @@
 {% block title %}Профиль{% endblock %}
 
 {% block content %}
+
 {# --- About me (index only) --- #}
-{% set bio = (current_user.bio or '')|trim %}
+{% set bio = (current_user.bio or '')|replace('\r\n', '\n') %}
+{% set bio = bio.lstrip() %}
 {% if current_user.is_authenticated and (current_user.age or bio) %}
   <div class="card border-secondary mb-3">
     <div class="card-body py-3">
@@ -22,7 +24,7 @@
       </div>
 
       {% if bio %}
-        <div class="mt-2" style="white-space: pre-wrap;">{{ bio }}</div>
+        <div class="mt-2 sw-textblock">{{ bio }}</div>
       {% else %}
         <div class="mt-2 text-muted">Пока пусто.</div>
       {% endif %}
