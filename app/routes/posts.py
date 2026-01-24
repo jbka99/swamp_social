@@ -14,15 +14,14 @@ from app.services import (
 @bp.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
-
     if request.method == 'POST':
-        body = request.form.get('body')
-        title = request.form.get('title')
+        content = request.form.get('content') or request.form.get('body') or ''
+        title = request.form.get('title') or ''
 
         result = create_post_service(
             user_id=current_user.id,
             title=title,
-            content=body,
+            content=content,
         )
 
         if result.created:
@@ -37,8 +36,11 @@ def index():
             flash('Слишком много постов, подождите минутку', 'warning')
 
         return redirect(url_for('routes.index'))
-    
-    return render_template("index.html", user=current_user)
+
+    posts = get_main_feed(user_id=current_user.id)
+
+    return render_template("index.html", posts=posts)
+
     
 @bp.route('/feed')
 @login_required
