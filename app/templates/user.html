@@ -52,9 +52,9 @@
     </div>
   </div>
 
-  <!-- Посты пользователя -->
+  <!-- Треды пользователя -->
   <div class="col-12 col-lg-8">
-    {% if posts and posts|length > 0 %}
+    {% if threads and threads|length > 0 %}
       <div class="card bg-black border border-secondary shadow-sm mb-3">
         <div class="card-body">
           <div class="d-flex align-items-center justify-content-between mb-2">
@@ -62,7 +62,8 @@
           </div>
 
           <div class="posts-list">
-            {% for post in posts %}
+            {% for thread in threads %}
+              {% set thread = thread %}
               {% include "components/_post_card.html" %}
             {% endfor %}
           </div>
@@ -72,7 +73,7 @@
       <div class="card bg-black border border-secondary shadow-sm">
         <div class="card-body text-secondary">
           <div class="h5 mb-2 fw-bold">Записи пользователя</div>
-          У пользователя пока нет постов.
+          У пользователя пока нет тредов.
         </div>
       </div>
     {% endif %}

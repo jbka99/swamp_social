@@ -7,6 +7,20 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    # Compute IS_DEV once
+    is_dev = app.config.get("IS_DEV", False)
+
+    # Validate required config in production
+    if not is_dev:
+        if not app.config.get("SECRET_KEY"):
+            raise RuntimeError("SECRET_KEY is not set")
+        if not app.config.get("SQLALCHEMY_DATABASE_URI"):
+            raise RuntimeError("DATABASE_URL is not set")
+
+    # Force disable AUTO_CREATE_DB if not dev
+    if not is_dev:
+        app.config["AUTO_CREATE_DB"] = False
+
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
@@ -28,7 +42,7 @@ def create_app(config_class=Config):
     # If you want auto-create for local dev, set AUTO_CREATE_DB=1.
     if app.config.get("AUTO_CREATE_DB"):
         with app.app_context():
-            from app.models import User, Post
+            from app.models import User, Thread
             db.create_all()
 
     return app

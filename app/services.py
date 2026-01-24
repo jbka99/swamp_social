@@ -1,10 +1,13 @@
 from dataclasses import dataclass
 from app.extensions import db
-from app.models import Post, User
+from app.models import Thread, User, Update
 from typing import Optional, Iterable
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
 from flask import current_app
+
+# Backward compatibility alias
+Post = Thread
 
 # Admin op
 
@@ -31,8 +34,8 @@ def admin_delete_all_posts_from_user(target_user_id: int, actor_is_admin: bool) 
         return DeleteAllPostsFromUserResult(deleted=False, deleted_count=0, reason="not_found")
     
     deleted_count = (
-        Post.query
-        .filter(Post.user_id == user.id)
+        Thread.query
+        .filter(Thread.user_id == user.id)
         .delete(synchronize_session=False)
     )
     db.session.commit()
@@ -54,8 +57,8 @@ def admin_delete_user(target_user_id: int, actor_user_id: int, actor_is_admin: b
     if user is None:
         return DeleteUserResult(deleted=False, reason="not_found")
     
-    # Сначала удаляю посты, а потом пользователя
-    Post.query.filter(Post.user_id == user.id).delete(synchronize_session=False)
+    # Сначала удаляю треды, а потом пользователя
+    Thread.query.filter(Thread.user_id == user.id).delete(synchronize_session=False)
     db.session.delete(user)
     db.session.commit()
 
@@ -93,8 +96,8 @@ def admin_bulk_delete_users(
     # load targets and delete via ORM (stable for session/tests)
     users = User.query.filter(User.id.in_(ids)).all()
 
-    # delete posts first (fast path)
-    Post.query.filter(Post.user_id.in_([u.id for u in users])).delete(synchronize_session=False)
+    # delete threads first (fast path)
+    Thread.query.filter(Thread.user_id.in_([u.id for u in users])).delete(synchronize_session=False)
 
     for u in users:
         db.session.delete(u)
@@ -102,71 +105,83 @@ def admin_bulk_delete_users(
     db.session.commit()
     return BulkDeleteUsersResult(deleted=True, deleted_count=len(users), reason="ok")
 
-# Количество постов на странице
-def get_main_feed(page: int = 1, per_page: int = 20):
+# Thread listing (replaces old feed)
+def get_threads_feed(page: int = 1, per_page: int = 20):
     page = max(int(page), 1)
     per_page = min(max(int(per_page), 1), 50)
-    query = Post.query.order_by(Post.date_posted.desc())
+    query = Thread.query.order_by(Thread.date_posted.desc())
     return query.paginate(page=page, per_page=per_page, error_out=False)
 
-# Посты конкретного пользователя (для /index и /user/<username>)
-def list_user_posts(user_id: int, limit: int = 50):
+# Backward compatibility alias
+get_main_feed = get_threads_feed
+
+# Threads of a specific user
+def list_user_threads(user_id: int, limit: int = 50):
     user_id = int(user_id)
     limit = min(max(int(limit), 1), 100)
 
     return (
-        Post.query
-        .filter(Post.user_id == user_id)
-        .order_by(Post.date_posted.desc())
+        Thread.query
+        .filter(Thread.user_id == user_id)
+        .order_by(Thread.date_posted.desc())
         .limit(limit)
         .all()
     )
 
-# Удаление поста
+# Backward compatibility alias
+list_user_posts = list_user_threads
+
+# Thread deletion
 @dataclass(frozen=True)
-class DeletePostResult:
+class DeleteThreadResult:
     deleted: bool
     reason: str  # "ok" | "not_found" | "forbidden"
 
-# Удаляем пост, если он существует и у пользователя есть права
-def delete_post(post_id: int, actor_user_id: int, actor_is_admin: bool) -> DeletePostResult:
+# Backward compatibility alias
+DeletePostResult = DeleteThreadResult
 
-    post = db.session.get(Post, int(post_id))
-    if post is None:
-        return DeletePostResult(deleted=False, reason="not_found")
+def delete_thread(thread_id: int, actor_user_id: int, actor_is_admin: bool) -> DeleteThreadResult:
+    thread = db.session.get(Thread, int(thread_id))
+    if thread is None:
+        return DeleteThreadResult(deleted=False, reason="not_found")
 
-    can_delete = actor_is_admin or (post.user_id == actor_user_id)
+    can_delete = actor_is_admin or (thread.user_id == actor_user_id)
     if not can_delete:
-        return DeletePostResult(deleted=False, reason="forbidden")
+        return DeleteThreadResult(deleted=False, reason="forbidden")
 
-    db.session.delete(post)
+    db.session.delete(thread)
     db.session.commit()
-    return DeletePostResult(deleted=True, reason="ok")
+    return DeleteThreadResult(deleted=True, reason="ok")
 
-# Создание поста
+# Backward compatibility alias
+delete_post = delete_thread
+
+# Thread creation
 @dataclass(frozen=True)
-class CreatePostResult:
+class CreateThreadResult:
     created: bool
-    post_id: Optional[int]
-    reason: str  # "ok" | "empty_content"
+    thread_id: Optional[int]
+    reason: str  # "ok" | "empty_content" | "too_long_title" | "too_long_content" | "rate_limited"
 
-def create_post(user_id: int, title: str, content: str) -> CreatePostResult:
+# Backward compatibility alias
+CreatePostResult = CreateThreadResult
 
+def create_thread(user_id: int, title: str, content: str) -> CreateThreadResult:
     MAX_TITLE_LEN = 100
     MAX_CONTENT_LEN = 2000
-    POSTS_PER_MINUTE = 5
+    THREADS_PER_MINUTE = 5
 
     content = (content or "").strip()
     title = (title or "").strip()
 
     if len(title) > MAX_TITLE_LEN:
-        return CreatePostResult(created=False, post_id=None, reason="too_long_title")
+        return CreateThreadResult(created=False, thread_id=None, reason="too_long_title")
     
     if len(content) > MAX_CONTENT_LEN:
-        return CreatePostResult(created=False, post_id=None, reason="too_long_content")
+        return CreateThreadResult(created=False, thread_id=None, reason="too_long_content")
 
     if not content:
-        return CreatePostResult(created=False, post_id=None, reason="empty_content")
+        return CreateThreadResult(created=False, thread_id=None, reason="empty_content")
 
     # Если title пустой, чтобы не падало заглушка
     if not title:
@@ -177,19 +192,63 @@ def create_post(user_id: int, title: str, content: str) -> CreatePostResult:
     
     count = (
         db.session
-        .query(func.count(Post.id))
+        .query(func.count(Thread.id))
         .filter(
-            Post.user_id == user_id,
-            Post.date_posted >= window_start
+            Thread.user_id == user_id,
+            Thread.date_posted >= window_start
         )
         .scalar()
     )
 
-    if count >= POSTS_PER_MINUTE:
-        return CreatePostResult(created=False, post_id=None, reason="rate_limited")
+    if count >= THREADS_PER_MINUTE:
+        return CreateThreadResult(created=False, thread_id=None, reason="rate_limited")
 
-    post = Post(title=title, content=content, user_id=user_id)
-    db.session.add(post)
+    thread = Thread(title=title, content=content, user_id=user_id)
+    db.session.add(thread)
     db.session.commit()
 
-    return CreatePostResult(created=True, post_id=post.id, reason="ok")
+    return CreateThreadResult(created=True, thread_id=thread.id, reason="ok")
+
+# Backward compatibility alias
+create_post = create_thread
+
+# Update services
+@dataclass(frozen=True)
+class CreateUpdateResult:
+    created: bool
+    update_id: Optional[int]
+    reason: str  # "ok" | "forbidden" | "empty_content" | "too_long_title" | "too_long_content"
+
+def create_update(actor_user_id: int, actor_is_admin: bool, title: str, content: str) -> CreateUpdateResult:
+    if not actor_is_admin:
+        return CreateUpdateResult(created=False, update_id=None, reason="forbidden")
+    
+    MAX_TITLE_LEN = 200
+    MAX_CONTENT_LEN = 5000
+
+    content = (content or "").strip()
+    title = (title or "").strip()
+
+    if len(title) > MAX_TITLE_LEN:
+        return CreateUpdateResult(created=False, update_id=None, reason="too_long_title")
+    
+    if len(content) > MAX_CONTENT_LEN:
+        return CreateUpdateResult(created=False, update_id=None, reason="too_long_content")
+
+    if not content:
+        return CreateUpdateResult(created=False, update_id=None, reason="empty_content")
+
+    if not title:
+        return CreateUpdateResult(created=False, update_id=None, reason="empty_content")
+
+    update = Update(title=title, content=content, author_id=actor_user_id)
+    db.session.add(update)
+    db.session.commit()
+
+    return CreateUpdateResult(created=True, update_id=update.id, reason="ok")
+
+def list_updates(page: int = 1, per_page: int = 20):
+    page = max(int(page), 1)
+    per_page = min(max(int(per_page), 1), 50)
+    query = Update.query.order_by(Update.created_at.desc())
+    return query.paginate(page=page, per_page=per_page, error_out=False)

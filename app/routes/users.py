@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 
 from app.routes import bp
 from app.extensions import db
-from app.models import User, Post
+from app.models import User, Thread
 
 @bp.route('/settings', methods = ['POST', 'GET'])
 @login_required
@@ -44,5 +44,5 @@ def settings():
 @login_required
 def user_profile(username):
     user = User.query.filter_by(username=username).first_or_404()
-    posts = Post.query.filter_by(author=user).order_by(Post.date_posted.desc()).all()
-    return render_template('user.html', user=user, posts=posts)
+    threads = Thread.query.filter_by(author=user).order_by(Thread.date_posted.desc()).all()
+    return render_template('user.html', user=user, threads=threads)

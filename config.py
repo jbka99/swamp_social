@@ -9,27 +9,23 @@ class Config:
     env_admins = {u.strip() for u in os.getenv("ADMIN_USERNAMES", "").split(",") if u.strip()}
     ADMIN_USERNAMES = default_admins | env_admins
 
+    # Compute IS_DEV once
+    _env = os.environ.get("FLASK_ENV") or os.environ.get("ENV") or "production"
+    IS_DEV = str(_env).lower() in {"development", "dev"}
+
     # In production SECRET_KEY must be set.
     # In development we allow a fallback to avoid breaking local runs.
     SECRET_KEY = os.environ.get('SECRET_KEY')
-    if not SECRET_KEY:
-        env = os.environ.get("FLASK_ENV") or os.environ.get("ENV") or "production"
-        if str(env).lower() in {"development", "dev"}:
-            SECRET_KEY = "dev-secret-key"
-        else:
-            raise RuntimeError("SECRET_KEY is not set")
+    if not SECRET_KEY and IS_DEV:
+        SECRET_KEY = "dev-secret-key"
     
     uri = os.environ.get('DATABASE_URL')
     if uri and uri.startswith("postgres://"):
         uri = uri.replace("postgres://", "postgresql://", 1)
     
-    if not uri:
-        env = os.environ.get("FLASK_ENV") or os.environ.get("ENV") or "production"
-        if str(env).lower() in {"development", "dev"}:
-            # safe local default
-            uri = "sqlite:///instance/local.db"
-        else:
-            raise RuntimeError("DATABASE_URL is not set")
+    if not uri and IS_DEV:
+        # safe local default
+        uri = "sqlite:///instance/local.db"
 
     SQLALCHEMY_DATABASE_URI = uri
     SQLALCHEMY_TRACK_MODIFICATIONS = False

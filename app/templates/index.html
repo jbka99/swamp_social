@@ -32,48 +32,21 @@
   </div>
 {% endif %}
 
-<!-- Создать пост -->
-<div class="card bg-black border border-secondary shadow-sm mb-4">
-  <div class="card-body">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <div class="h5 mb-0 fw-bold">Что нового?</div>
-    </div>
-
-    <form method="POST" action="{{ url_for('routes.index') }}" class="d-grid gap-3">
-      <div>
-        <label class="form-label text-secondary">Заголовок</label>
-        <input type="text" name="title" class="form-control" placeholder="О чём пост?" required>
-      </div>
-
-      <div>
-        <label class="form-label text-secondary">Текст</label>
-        <textarea name="body" class="form-control" placeholder="Ваши мысли..." rows="4" required></textarea>
-      </div>
-
-      <div class="d-flex justify-content-end">
-        <button type="submit" class="btn btn-success">
-          Опубликовать
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Мои посты -->
+<!-- Мои треды -->
 <div class="d-flex align-items-center justify-content-between mb-2">
-  <div class="h5 mb-0 fw-bold">Мои записи</div>
+  <div class="h5 mb-0 fw-bold">Мои треды</div>
 </div>
 
-{% if posts is defined and posts and posts|length > 0 %}
+{% if threads is defined and threads and threads|length > 0 %}
   <div class="posts-list">
-    {% for post in posts %}
+    {% for thread in threads %}
       {% include "components/_post_card.html" %}
     {% endfor %}
   </div>
 {% else %}
   <div class="card bg-black border border-secondary shadow-sm">
     <div class="card-body text-secondary">
-      У вас ещё нет постов.
+      У вас ещё нет тредов.
     </div>
   </div>
 {% endif %}
