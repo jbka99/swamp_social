@@ -37,7 +37,7 @@ def index():
 
         return redirect(url_for('routes.index'))
 
-    posts = get_main_feed(user_id=current_user.id)
+    # posts = get_main_feed(user_id=current_user.id)
 
     return render_template("index.html", posts=posts)
 
