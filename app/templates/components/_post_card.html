@@ -16,14 +16,13 @@
           <img
             src="{{ post.author.avatar_url if post.author.avatar_url else 'https://api.dicebear.com/7.x/identicon/svg?seed=' + post.author.username }}"
             alt="AV"
-            class="rounded-circle border border-secondary"
-            style="width: 38px; height: 38px; object-fit: cover;"
+            class="rounded-circle border border-secondary avatar-sm"
             referrerpolicy="no-referrer"
           >
         </a>
 
         <div class="lh-sm">
-          <a class="text-decoration-none text-light fw-semibold"
+          <a class="text-decoration-none post-author-name"
              href="{{ author_url }}">
             {{ post.author.display_name or post.author.username }}
           </a>
@@ -35,17 +34,17 @@
       </div>
 
       {% if current_user.is_admin or post.author == current_user %}
-      <form action="{{ url_for('routes.delete_post', post_id=post.id) }}" method="POST" class="m-0">
-        <button
-          type="submit"
-          class="btn btn-sw-danger btn-sm"
-          onclick="return confirm('Удалить этот пост?')"
-          aria-label="Удалить пост"
-          title="Удалить"
-        >
-          ×
-        </button>
-      </form>
+        <form action="{{ url_for('routes.delete_post', post_id=post.id) }}" method="POST" class="m-0">
+          <button
+            type="submit"
+            class="btn btn-sw-danger btn-sm"
+            onclick="return confirm('Удалить этот пост?')"
+            aria-label="Удалить пост"
+            title="Удалить"
+          >
+            ×
+          </button>
+        </form>
       {% endif %}
     </div>
 
@@ -59,29 +58,21 @@
     {% set PREVIEW_LEN = 220 %}
     {% set is_long = content|length > PREVIEW_LEN %}
     {% set preview_text = content[:PREVIEW_LEN] %}
+    {% set remaining_text = content[PREVIEW_LEN:] %}
 
     {# NOTE: No auto-animate here. It conflicts with Bootstrap collapse height animation. #}
     <div>
-      <div id="post-{{ post.id }}-preview">
-        <p class="mb-0 text-light-emphasis" style="white-space: pre-wrap;">
-          {{ preview_text }}{% if is_long %}…{% endif %}
-        </p>
+      <div id="post-{{ post.id }}-full-preview" class="post-preview">
+        <p class="mb-0 text-light-emphasis post-content post-text" data-post-text>{{ preview_text }}{% if is_long %}<span class="post-ellipsis">…</span><span class="post-remaining is-hidden" data-post-remaining>{{ remaining_text }}</span>{% endif %}</p>
       </div>
 
       {% if is_long %}
-        <div class="collapse mt-2" id="post-{{ post.id }}-full">
-          <p class="mb-0 text-light-emphasis" style="white-space: pre-wrap;">
-            {{ content }}
-          </p>
-        </div>
-
         <button
-          class="btn btn-sm btn-link link-success px-0 mt-1 js-toggle-collapse"
+          class="btn btn-sm btn-link link-success px-0 mt-1 js-toggle-post"
           type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#post-{{ post.id }}-full"
+          data-target="post-{{ post.id }}"
           aria-expanded="false"
-          aria-controls="post-{{ post.id }}-full"
+          aria-controls="post-{{ post.id }}-full-preview"
           data-text-show="Показать полностью"
           data-text-hide="Скрыть"
         >

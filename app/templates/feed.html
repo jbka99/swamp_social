@@ -27,31 +27,5 @@
   </div>
 {% endif %}
 
-{% if pagination %}
-<nav class="mt-4" aria-label="Навигация по ленте">
-  <ul class="pagination justify-content-center mb-0">
-
-    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-      <a class="page-link"
-         href="{{ url_for('routes.feed', page=pagination.prev_num) if pagination.has_prev else '#' }}">
-        ← Назад
-      </a>
-    </li>
-
-    <li class="page-item disabled">
-      <span class="page-link">
-        {{ pagination.page }} / {{ pagination.pages }}
-      </span>
-    </li>
-
-    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-      <a class="page-link"
-         href="{{ url_for('routes.feed', page=pagination.next_num) if pagination.has_next else '#' }}">
-        Вперёд →
-      </a>
-    </li>
-
-  </ul>
-</nav>
-{% endif %}
+{# pagination removed for now #}
 {% endblock %}

@@ -14,8 +14,7 @@
           <img
             src="{{ user.avatar_url if user.avatar_url else 'https://api.dicebear.com/7.x/identicon/svg?seed=' + user.username }}"
             alt="Avatar"
-            class="rounded-circle border border-secondary"
-            style="width: 72px; height: 72px; object-fit: cover;"
+            class="rounded-circle border border-secondary avatar-lg"
             referrerpolicy="no-referrer"
           >
 
@@ -39,9 +38,7 @@
         <div class="text-secondary small mb-1">О себе</div>
         {% set bio = (user.bio or '')|replace('\r\n', '\n') %}
         {% set bio = bio.lstrip() %}
-        <div class="text-light-emphasis" style="white-space: pre-wrap;">
-          {{ bio if bio else 'Пользователь еще ничего не рассказал о себе.' }}
-        </div>
+        <div class="text-light-emphasis post-content">{{ bio if bio else 'Пользователь еще ничего не рассказал о себе.' }}</div>
 
         <div class="mt-4 d-grid gap-2">
 
@@ -57,19 +54,24 @@
 
   <!-- Посты пользователя -->
   <div class="col-12 col-lg-8">
-    <div class="d-flex align-items-center justify-content-between mb-2">
-      <div class="h5 mb-0 fw-bold">Записи пользователя</div>
-    </div>
-
     {% if posts and posts|length > 0 %}
-      <div class="posts-list">
-        {% for post in posts %}
-          {% include "components/_post_card.html" %}
-        {% endfor %}
+      <div class="card bg-black border border-secondary shadow-sm mb-3">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="h5 mb-0 fw-bold">Записи пользователя</div>
+          </div>
+
+          <div class="posts-list">
+            {% for post in posts %}
+              {% include "components/_post_card.html" %}
+            {% endfor %}
+          </div>
+        </div>
       </div>
     {% else %}
       <div class="card bg-black border border-secondary shadow-sm">
         <div class="card-body text-secondary">
+          <div class="h5 mb-2 fw-bold">Записи пользователя</div>
           У пользователя пока нет постов.
         </div>
       </div>
