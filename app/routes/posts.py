@@ -8,6 +8,7 @@ from app.services import (
     create_post as create_post_service,
     delete_post as delete_post_service,
     get_main_feed,
+    list_user_posts,
 )
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -37,8 +38,7 @@ def index():
 
         return redirect(url_for('routes.index'))
 
-    # posts = get_main_feed(user_id=current_user.id)
-
+    posts = list_user_posts(user_id=current_user.id)
     return render_template("index.html", posts=posts)
 
     

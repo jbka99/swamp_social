@@ -109,6 +109,19 @@ def get_main_feed(page: int = 1, per_page: int = 20):
     query = Post.query.order_by(Post.date_posted.desc())
     return query.paginate(page=page, per_page=per_page, error_out=False)
 
+# Посты конкретного пользователя (для /index и /user/<username>)
+def list_user_posts(user_id: int, limit: int = 50):
+    user_id = int(user_id)
+    limit = min(max(int(limit), 1), 100)
+
+    return (
+        Post.query
+        .filter(Post.user_id == user_id)
+        .order_by(Post.date_posted.desc())
+        .limit(limit)
+        .all()
+    )
+
 # Удаление поста
 @dataclass(frozen=True)
 class DeletePostResult:
