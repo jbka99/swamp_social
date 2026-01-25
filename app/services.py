@@ -149,6 +149,9 @@ def delete_thread(thread_id: int, actor_user_id: int, actor_is_admin: bool) -> D
     if not can_delete:
         return DeleteThreadResult(deleted=False, reason="forbidden")
 
+    # delete comments first
+    db.session.query(Comment).filter(Comment.post_id == thread_id).delete(synchronize_session=False)
+
     db.session.delete(thread)
     db.session.commit()
     return DeleteThreadResult(deleted=True, reason="ok")
