@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SWAMP | {% block title %}{% endblock %}</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -17,58 +20,130 @@
 
 <body class="swamp theme-light">
 
-  <nav class="navbar navbar-light bg-black border-bottom border-secondary">
+  <nav class="navbar navbar-light bg-black">
     <div class="container-fluid justify-content-center px-3 px-lg-4">
-      <a class="navbar-brand fw-bold m-0" href="{{ url_for('routes.feed') }}">SWAMP</a>
+      <a class="navbar-brand fw-bold m-0" href="{{ url_for('routes.threads') }}">SWAMP</a>
     </div>
   </nav>
 
-  {% set is_auth_page = request.endpoint in ['routes.login', 'routes.register'] %}
+  {% set is_auth_page = request.endpoint in ['routes.login', 'routes.register'] if request.endpoint else False %}
 
   <main class="container-fluid py-3 py-lg-4 px-3 px-lg-4">
+    {% if not is_auth_page %}
+      {% set path_str = request.path|default('')|string %}
+      {% set path_parts = path_str.strip('/').split('/') if path_str else [] %}
+      {% set path_parts = path_parts if path_parts|length > 0 and path_parts[0] != '' else [] %}
+      {% set endpoint_name = (request.endpoint|default(''))|string %}
+      {% set show_breadcrumbs = (path_parts|length > 0 and path_parts[0] != 'feed') or endpoint_name == 'routes.index' %}
+      {% if show_breadcrumbs %}
+      <div class="layout-3col">
+        <nav class="breadcrumbs col-main" aria-label="Breadcrumb" style="grid-column: 1 / -1;">
+          {% if breadcrumbs is defined and breadcrumbs %}
+            <a href="{{ url_for('routes.feed') }}" class="breadcrumbs__item">Главная</a>
+            <span class="breadcrumbs__separator">/</span>
+            {% for item in breadcrumbs %}
+              {% if not loop.last %}
+                {% if item.url %}
+                  <a href="{{ item.url }}" class="breadcrumbs__item">{{ item.label }}</a>
+                {% else %}
+                  <span class="breadcrumbs__item">{{ item.label }}</span>
+                {% endif %}
+                <span class="breadcrumbs__separator">/</span>
+              {% else %}
+                <span class="breadcrumbs__item breadcrumbs__item--active">{{ item.label }}</span>
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            {# Default breadcrumbs based on request.path #}
+            <a href="{{ url_for('routes.feed') }}" class="breadcrumbs__item">Главная</a>
+            {% if endpoint_name == 'routes.index' %}
+              <span class="breadcrumbs__separator">/</span>
+              <span class="breadcrumbs__item breadcrumbs__item--active">Мой профиль</span>
+            {% elif path_parts|length > 0 and path_parts[0] == 'threads' %}
+              <span class="breadcrumbs__separator">/</span>
+              <span class="breadcrumbs__item breadcrumbs__item--active">Треды</span>
+            {% elif path_parts|length > 1 and path_parts[0] == 'user' %}
+              <span class="breadcrumbs__separator">/</span>
+              {% set username = path_parts[1] if path_parts|length > 1 else '' %}
+              {% set user_authenticated = current_user.is_authenticated|default(false) %}
+              {% set current_username = '' %}
+              {% if user_authenticated %}
+                {% set current_username = current_user.username|default('') %}
+              {% endif %}
+              {% if username and user_authenticated and current_username == username %}
+                <span class="breadcrumbs__item breadcrumbs__item--active">Мой профиль</span>
+              {% else %}
+                <span class="breadcrumbs__separator">/</span>
+                <span class="breadcrumbs__item">Профиль</span>
+                {% if username %}
+                  <span class="breadcrumbs__separator">/</span>
+                  <span class="breadcrumbs__item breadcrumbs__item--active">{{ username }}</span>
+                {% endif %}
+              {% endif %}
+            {% elif path_parts|length > 0 and path_parts[0] == 'admin' %}
+              <span class="breadcrumbs__separator">/</span>
+              <span class="breadcrumbs__item breadcrumbs__item--active">Админка</span>
+            {% elif path_parts|length > 1 and path_parts[0] == 'thread' %}
+              <span class="breadcrumbs__separator">/</span>
+              <a href="{{ url_for('routes.threads') }}" class="breadcrumbs__item">Треды</a>
+              <span class="breadcrumbs__separator">/</span>
+              {% if thread is defined and thread and thread.title %}
+                <span class="breadcrumbs__item breadcrumbs__item--active">{{ thread.title[:50] }}{% if thread.title|length > 50 %}...{% endif %}</span>
+              {% else %}
+                <span class="breadcrumbs__item breadcrumbs__item--active">Тред</span>
+              {% endif %}
+            {% elif path_parts|length > 0 and path_parts[0] == 'settings' %}
+              <span class="breadcrumbs__separator">/</span>
+              <span class="breadcrumbs__item breadcrumbs__item--active">Настройки</span>
+            {% endif %}
+          {% endif %}
+        </nav>
+      </div>
+      {% endif %}
+    {% endif %}
+    
     {% with messages = get_flashed_messages(with_categories=True) %}
       {% if messages %}
-        <div class="mb-3">
-          {% for category, message in messages %}
-            {% set bs = 'info' %}
-            {% if category in ['success', 'ok'] %}{% set bs = 'success' %}{% endif %}
-            {% if category in ['danger', 'error'] %}{% set bs = 'danger' %}{% endif %}
-            {% if category in ['warning'] %}{% set bs = 'warning' %}{% endif %}
+        {% if is_auth_page %}
+          <div class="layout-shell mb-3">
+        {% else %}
+          <div class="layout-3col mb-3">
+            <div class="col-main" style="grid-column: 1 / -1;">
+        {% endif %}
+            {% for category, message in messages %}
+              {% set bs = 'info' %}
+              {% if category in ['success', 'ok'] %}{% set bs = 'success' %}{% endif %}
+              {% if category in ['danger', 'error'] %}{% set bs = 'danger' %}{% endif %}
+              {% if category in ['warning'] %}{% set bs = 'warning' %}{% endif %}
 
-            <div class="alert alert-{{ bs }} mb-2" role="alert">
-              {{ message }}
+              <div class="alert alert-{{ bs }} mb-2" role="alert">
+                {{ message }}
+              </div>
+            {% endfor %}
+        {% if not is_auth_page %}
             </div>
-          {% endfor %}
-        </div>
+        {% endif %}
+          </div>
       {% endif %}
     {% endwith %}
 
-    <div class="layout-shell">
-      <div class="row g-3 g-lg-4 align-items-start">
+    {% if is_auth_page %}
+      <div class="layout-shell"><div class="auth-wrap">
+    {% else %}
+      <div class="layout-3col">
+        <aside class="col-left">{% include 'components/_sidebar_left.html' %}</aside>
+        <section class="col-main">
+    {% endif %}
 
-        {# Left rail только не на auth #}
-        {% if not is_auth_page %}
-        <aside class="col-lg-3 col-xl-2 d-none d-lg-block">
-          {% include 'components/_sidebar_left.html' %}
-        </aside>
-        {% endif %}
+    {% block content %}{% endblock %}
 
-        {# Центр: на auth делаем широкую колонку и центрируем внутренности #}
-        <section class="{% if is_auth_page %}col-12{% else %}col-12 col-lg-6 col-xl-7{% endif %}">
-          <div class="{% if is_auth_page %}auth-wrap{% endif %}">
-            {% block content %}{% endblock %}
-          </div>
+    {% if is_auth_page %}
+      </div></div>
+    {% else %}
         </section>
-
-        {# Right rail только не на auth #}
-        {% if not is_auth_page %}
-        <aside class="col-lg-3 col-xl-3 d-none d-lg-block">
-          {% include 'components/_sidebar_right.html' %}
-        </aside>
-        {% endif %}
-
+        <aside class="col-right">{% include 'components/_sidebar_right.html' %}</aside>
       </div>
-    </div>
+    {% endif %}
   </main>
 
   <div class="scroll-controls" aria-label="Быстрая прокрутка">
@@ -166,6 +241,81 @@
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <script>
     AOS.init({ duration: 500, easing: "ease-out-cubic", once: true, offset: 60 });
+  </script>
+
+  <script>
+    // Image preview functionality for file inputs
+    (function() {
+      function setupImagePreview(input, previewContainer) {
+        if (!input || !previewContainer) return;
+
+        const previewImg = previewContainer.querySelector('.image-preview');
+        const removeBtn = previewContainer.querySelector('.image-preview-remove');
+
+        function showPreview(file) {
+          if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              previewImg.src = e.target.result;
+              previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+          }
+        }
+
+        function hidePreview() {
+          previewContainer.style.display = 'none';
+          previewImg.src = '';
+          input.value = '';
+        }
+
+        input.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+            showPreview(file);
+          } else {
+            hidePreview();
+          }
+        });
+
+        if (removeBtn) {
+          removeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            hidePreview();
+          });
+        }
+      }
+
+      // Setup previews for all image inputs when DOM is ready
+      document.addEventListener('DOMContentLoaded', function() {
+        // Thread creation form
+        const threadInput = document.querySelector('.thread-image-input');
+        if (threadInput) {
+          const threadContainer = threadInput.closest('form')?.querySelector('.image-preview-container');
+          if (threadContainer) {
+            setupImagePreview(threadInput, threadContainer);
+          }
+        }
+
+        // Comment form
+        const commentInput = document.querySelector('.comment-image-input');
+        if (commentInput) {
+          const commentContainer = document.getElementById('comment-image-preview');
+          if (commentContainer) {
+            setupImagePreview(commentInput, commentContainer);
+          }
+        }
+
+        // Update form
+        const updateInput = document.querySelector('.update-image-input');
+        if (updateInput) {
+          const updateContainer = updateInput.closest('form')?.querySelector('.image-preview-container');
+          if (updateContainer) {
+            setupImagePreview(updateInput, updateContainer);
+          }
+        }
+      });
+    })();
   </script>
 
 </body>

@@ -44,6 +44,7 @@ class Thread(db.Model):
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    image_url = db.Column(db.String(256), nullable=True)
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
@@ -61,10 +62,14 @@ class Comment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
     parent_id = db.Column(db.Integer, db.ForeignKey('comment.id'), nullable=True)
+    reply_to_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
-    author = db.relationship('User', lazy=True)
+    author = db.relationship('User', lazy=True, foreign_keys=[user_id])
+    reply_to_user = db.relationship('User', lazy=True, foreign_keys=[reply_to_user_id])
     thread = db.relationship('Thread', backref=db.backref('comments', lazy=True))
     parent = db.relationship('Comment', remote_side=[id], backref=db.backref('replies', lazy=True))
+
+    image_url = db.Column(db.String(256), nullable=True)
 
     @property
     def post(self):
@@ -72,7 +77,7 @@ class Comment(db.Model):
         return self.thread
 
     def __repr__(self):
-        return f"<Comment {self.id} user={self.user_id} post={self.post_id} parent={self.parent_id}>"
+        return f"<Comment {self.id} user={self.user_id} post={self.post_id} parent={self.parent_id} reply_to={self.reply_to_user_id}>"
 
 class Update(db.Model):
     __tablename__ = 'updates'

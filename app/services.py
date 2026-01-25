@@ -1,10 +1,58 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import Optional, Iterable, Any, Dict
+from datetime import datetime, timedelta, timezone
+
+from flask import current_app
+from sqlalchemy import func
+import cloudinary.uploader
+
 from app.extensions import db
 from app.models import Thread, User, Update, Comment
-from typing import Optional, Iterable
-from datetime import datetime, timedelta, timezone
-from sqlalchemy import func
-from flask import current_app
+
+AlLOWED_MIME = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+MAX_BYTES = 10 * 1024 * 1024 # 10MB
+
+def upload_content_image(file, *, folder: str) -> Dict[str, Any]:
+    if not file or getattr(file, "filename", "") == "":
+        return {"ok": True, "url": None, "public_id": None, "error": None}
+
+    # MIME
+    mime = getattr(file, "mimetype", None)
+    if mime not in AlLOWED_MIME:
+        return {"ok": False, "url": None, "public_id": None, "error": "bad_type"}
+
+    # SIZE
+    file.stream.seek(0, 2)
+    size = file.stream.tell()
+    file.stream.seek(0)
+    if size > MAX_BYTES:
+        return {"ok": False, "url": None, "public_id": None, "error": "too_large"}
+    
+    try:
+        result = cloudinary.uploader.upload(
+            file,
+            folder=folder,
+            resource_type="image",
+            overwrite=False,
+            unique_filename=True,
+            transformation=[
+                {"quality": "auto:eco"},
+                {"fetch_format": "auto"},
+                {"width": 520, "height": 520, "crop": "limit"},
+            ],
+        )
+        return {
+            "ok": True,
+            "url": result.get("secure_url"),
+            "public_id": result.get("public_id"),
+            "error": None,
+        }
+    except Exception:
+        current_app.logger.exception("Failed to upload content image")
+        return {"ok": False, "url": None, "public_id": None, "error": "upload_failed"}
+
 
 # Backward compatibility alias
 Post = Thread
@@ -169,7 +217,7 @@ class CreateThreadResult:
 # Backward compatibility alias
 CreatePostResult = CreateThreadResult
 
-def create_thread(user_id: int, title: str, content: str) -> CreateThreadResult:
+def create_thread(user_id: int, title: str, content: str, image_file=None) -> CreateThreadResult:
     MAX_TITLE_LEN = 100
     MAX_CONTENT_LEN = 2000
     THREADS_PER_MINUTE = 5
@@ -206,7 +254,21 @@ def create_thread(user_id: int, title: str, content: str) -> CreateThreadResult:
     if count >= THREADS_PER_MINUTE:
         return CreateThreadResult(created=False, thread_id=None, reason="rate_limited")
 
-    thread = Thread(title=title, content=content, user_id=user_id)
+    # Upload image if provided
+    image_url = None
+    if image_file:
+        upload_result = upload_content_image(image_file, folder="threads")
+        if not upload_result["ok"]:
+            error = upload_result.get("error", "upload_failed")
+            if error == "bad_type":
+                return CreateThreadResult(created=False, thread_id=None, reason="bad_image_type")
+            elif error == "too_large":
+                return CreateThreadResult(created=False, thread_id=None, reason="image_too_large")
+            else:
+                return CreateThreadResult(created=False, thread_id=None, reason="image_upload_failed")
+        image_url = upload_result.get("url")
+
+    thread = Thread(title=title, content=content, user_id=user_id, image_url=image_url)
     db.session.add(thread)
     db.session.commit()
 
@@ -222,7 +284,7 @@ class CreateUpdateResult:
     update_id: Optional[int]
     reason: str  # "ok" | "forbidden" | "empty_content" | "too_long_title" | "too_long_content"
 
-def create_update(actor_user_id: int, actor_is_admin: bool, title: str, content: str) -> CreateUpdateResult:
+def create_update(actor_user_id: int, actor_is_admin: bool, title: str, content: str, image_file=None) -> CreateUpdateResult:
     if not actor_is_admin:
         return CreateUpdateResult(created=False, update_id=None, reason="forbidden")
     
@@ -244,7 +306,21 @@ def create_update(actor_user_id: int, actor_is_admin: bool, title: str, content:
     if not title:
         return CreateUpdateResult(created=False, update_id=None, reason="empty_content")
 
-    update = Update(title=title, content=content, author_id=actor_user_id)
+    # Upload image if provided
+    image_path = None
+    if image_file:
+        upload_result = upload_content_image(image_file, folder="updates")
+        if not upload_result["ok"]:
+            error = upload_result.get("error", "upload_failed")
+            if error == "bad_type":
+                return CreateUpdateResult(created=False, update_id=None, reason="bad_image_type")
+            elif error == "too_large":
+                return CreateUpdateResult(created=False, update_id=None, reason="image_too_large")
+            else:
+                return CreateUpdateResult(created=False, update_id=None, reason="image_upload_failed")
+        image_path = upload_result.get("url")
+
+    update = Update(title=title, content=content, author_id=actor_user_id, image_path=image_path)
     db.session.add(update)
     db.session.commit()
 
@@ -258,7 +334,15 @@ def list_updates(page: int = 1, per_page: int = 20):
 
 # Comment services
 
-def create_comment(*, thread_id: int, author_id: int, content: str, parent_id: Optional[int] = None):
+def create_comment(
+    *, 
+    thread_id: int, 
+    author_id: int, 
+    content: str, 
+    parent_id: Optional[int] = None, 
+    reply_to_user_id: Optional[int] = None,
+    image_file=None,
+    ):
     content = (content or "").strip()
     if not content:
         return {"ok": False, "error": "empty", "comment_id": None}
@@ -275,8 +359,31 @@ def create_comment(*, thread_id: int, author_id: int, content: str, parent_id: O
         if parent_comment.post_id != thread_id:
             return {"ok": False, "error": "parent_mismatch", "comment_id": None}
 
+    # If reply_to_user_id is provided, verify the user exists
+    if reply_to_user_id is not None:
+        reply_to_user = db.session.get(User, int(reply_to_user_id))
+        if reply_to_user is None:
+            return {"ok": False, "error": "reply_to_user_not_found", "comment_id": None}
+
+    # Upload image if provided
+    image_url = None
+    if image_file:
+        upload_result = upload_content_image(image_file, folder="comments")
+        if not upload_result["ok"]:
+            return {"ok": False, "error": upload_result.get("error", "upload_failed"), "comment_id": None}
+        image_url = upload_result.get("url")
+
     # Thread.__tablename__ == 'post', so use post_id FK
-    comment = Comment(content=content, user_id=author_id, post_id=thread_id, parent_id=parent_id)
+    comment = Comment(
+        content=content, 
+        user_id=author_id, 
+        post_id=thread_id, 
+        parent_id=parent_id,
+        reply_to_user_id=reply_to_user_id,
+        image_url=image_url,
+    )
     db.session.add(comment)
     db.session.commit()
-    return {"ok": True, "error": None, "comment_id": comment.id} 
+    return {"ok": True, "error": None, "comment_id": comment.id}
+
+

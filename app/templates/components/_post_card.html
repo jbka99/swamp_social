@@ -72,6 +72,12 @@
         <p class="mb-0 text-light-emphasis post-content post-text" data-post-text>{{ preview_text }}{% if is_long %}<span class="post-ellipsis">…</span><span class="post-remaining is-hidden" data-post-remaining>{{ remaining_text }}</span>{% endif %}</p>
       </div>
 
+      {% if thread.image_url %}
+        <div class="mt-2">
+          <img src="{{ thread.image_url }}" alt="Thread image" class="content-image" style="max-width: 100%; height: auto;">
+        </div>
+      {% endif %}
+
       {% if is_long %}
         <button
           class="btn btn-sm btn-link link-success px-0 mt-1 js-toggle-post"

@@ -1,17 +1,17 @@
 {# templates/components/_sidebar_right.html #}
-{% if current_user.is_authenticated %}
+{% if current_user.is_authenticated|default(false) %}
   <div class="sidebar">
     <div class="sidebar__header">
       <div class="sidebar-user">
         <img
-          src="{{ current_user.avatar_url if current_user.avatar_url else 'https://api.dicebear.com/7.x/identicon/svg?seed=' + current_user.username }}"
+          src="{{ current_user.avatar_url|default('') if current_user.avatar_url|default('') else 'https://api.dicebear.com/7.x/identicon/svg?seed=' + (current_user.username|default('')) }}"
           alt="Avatar"
           class="sidebar-user__avatar"
           referrerpolicy="no-referrer"
         >
         <div>
-          <div class="sidebar-user__name">{{ current_user.display_name or current_user.username }}</div>
-          <div class="sidebar-user__handle">@{{ current_user.username }}</div>
+          <div class="sidebar-user__name">{{ (current_user.display_name|default('')) or (current_user.username|default('')) }}</div>
+          <div class="sidebar-user__handle">@{{ current_user.username|default('') }}</div>
         </div>
       </div>
     </div>
@@ -19,7 +19,7 @@
     <div class="sidebar__body">
       <ul class="sidebar__list">
 
-        <a class="sidebar__item" href="{{ url_for('routes.index') }}">
+        <a class="sidebar__item" href="{{ url_for('routes.user_profile', username='me') }}">
           Профиль
         </a>
 
@@ -31,16 +31,12 @@
           Инфо-панель
         </a>
 
-        <a class="sidebar__item" href="{{ url_for('routes.settings') }}">
-          Редактировать профиль
-        </a>
-
         <span class="sidebar__item sidebar__item--muted">
           Личные сообщения
           <span class="sidebar__badge">скоро</span>
         </span>
 
-        {% if current_user.is_admin %}
+        {% if current_user.is_admin|default(false) %}
           <a class="sidebar__item" href="{{ url_for('routes.admin_users') }}">
             Админка
           </a>

@@ -32,7 +32,10 @@ def admin_required(view):
 @admin_required
 def admin_users():
     users = User.query.order_by(User.id.asc()).all()
-    return render_template('admin_users.html', users=users)
+    breadcrumbs = [
+        {'label': 'Админка', 'url': ''}
+    ]
+    return render_template('admin_users.html', users=users, breadcrumbs=breadcrumbs)
 
 
 @bp.route('/admin/user/<int:user_id>/posts/delete', methods=['POST'])

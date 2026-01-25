@@ -1,10 +1,19 @@
 import os
 from app import create_app, db
 from app.models import User, Thread
+import cloudinary
 
 debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() in ['true', '1', 't']
 
 app = create_app()
+
+def init_cloudinary():
+    cloudinary.config(
+        cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+        api_key=os.getenv('CLOUDINARY_API_KEY'),
+        api_secret=os.getenv('CLOUDINARY_API_SECRET'),
+        secure=True,
+    )
 
 def ensure_tables():
     with app.app_context():

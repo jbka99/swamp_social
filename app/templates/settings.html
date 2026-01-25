@@ -13,6 +13,30 @@
 
     <div class="card bg-black border border-secondary shadow-sm">
       <div class="card-body p-4">
+        <form action="{{ url_for('routes.update_avatar') }}"
+                method="POST"
+                enctype="multipart/form-data"
+                class="d-grid gap-2">
+
+            <div>
+              <label class="form-label text-secondary mb-2">Аватар</label>
+
+              <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center">
+                <input
+                  type="file"
+                  name="avatar"
+                  accept="image/*"
+                  required
+                  class="form-control"
+                >
+
+                <button type="submit" class="btn btn-primary">
+                  Загрузить
+                </button>
+              </div>
+            </div>
+
+          </form>
 
         <form method="POST" class="d-grid gap-3">
 
@@ -45,20 +69,6 @@
           </div>
 
           <div>
-            <label class="form-label text-secondary">Ссылка на аватарку (URL)</label>
-            <input
-              type="url"
-              name="avatar_url"
-              class="form-control"
-              value="{{ user.avatar_url or '' }}"
-              placeholder="https://example.com/photo.jpg"
-            >
-            <div class="form-text text-secondary">
-              Поддерживается прямая ссылка на картинку. Если оставить пустым — будет авто-аватар.
-            </div>
-          </div>
-
-          <div>
             <label class="form-label text-secondary">О себе</label>
             {# IMPORTANT: keep textarea value inline (no leading newline/indent) #}
             <textarea name="bio"
@@ -77,7 +87,7 @@
           </div>
 
         </form>
-
+          <hr class="my-4 opacity-25">
       </div>
     </div>
 

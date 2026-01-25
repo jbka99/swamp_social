@@ -8,7 +8,7 @@ from app.models import User
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('routes.index'))
+        return redirect(url_for('routes.user_profile', username='me'))
 
     if request.method == 'POST':
         uname = request.form.get('username')
@@ -19,9 +19,9 @@ def login():
             login_user(user)
             from app.services import ensure_admin_flag
             ensure_admin_flag(user)
-            return redirect(url_for('routes.index'))
+            return redirect(url_for('routes.user_profile', username='me'))
         
-        flash('Incorrect login or password')
+        flash('Неверный логин или пароль', 'danger')
     
     return render_template('login.html')
 
@@ -32,7 +32,12 @@ def register():
         pwd = request.form.get('password')
 
         if User.query.filter_by(username=uname).first():
-            flash('This user already exists')
+            flash('Пользователь с таким именем уже существует', 'danger')
+            return redirect(url_for('routes.register'))
+        
+        # Password validation: minimum 8 characters
+        if not pwd or len(pwd) < 8:
+            flash('Пароль должен содержать минимум 8 символов', 'danger')
             return redirect(url_for('routes.register'))
         
         new_user = User(username = uname)
@@ -40,7 +45,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        flash('User succefully created!')
+        flash('Пользователь успешно создан!', 'success')
         return redirect(url_for('routes.login'))
 
     return render_template('register.html')

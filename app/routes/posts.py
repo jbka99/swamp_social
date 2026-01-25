@@ -1,6 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_required
 from sqlalchemy.orm import joinedload, selectinload
+import cloudinary.uploader
 
 from app.routes import bp
 from app.extensions import db
@@ -17,11 +18,12 @@ from app.services import (
 
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/index', methods=['GET', 'POST'])
-@login_required
 def index():
-    # Remove thread creation form - moved to sidebar
-    threads = list_user_threads(user_id=current_user.id)
-    return render_template("index.html", threads=threads)
+    # Redirect to user profile instead of separate index page
+    if current_user.is_authenticated:
+        return redirect(url_for('routes.user_profile', username='me'))
+    else:
+        return redirect(url_for('routes.login'))
 
     
 @bp.route('/threads')
@@ -44,7 +46,9 @@ def thread_detail(thread_id):
         db.session.query(Thread)
         .options(
             joinedload(Thread.comments).joinedload(Comment.author),
-            joinedload(Thread.comments).selectinload(Comment.replies).joinedload(Comment.author)
+            joinedload(Thread.comments).joinedload(Comment.reply_to_user),
+            joinedload(Thread.comments).selectinload(Comment.replies).joinedload(Comment.author),
+            joinedload(Thread.comments).selectinload(Comment.replies).joinedload(Comment.reply_to_user)
         )
         .filter(Thread.id == thread_id)
         .first()
@@ -62,7 +66,11 @@ def thread_detail(thread_id):
         if comment.replies:
             comment.replies.sort(key=lambda r: r.date_posted)
     
-    return render_template('thread.html', thread=thread, top_level_comments=top_level_comments)
+    breadcrumbs = [
+        {'label': 'Треды', 'url': url_for('routes.threads')},
+        {'label': (thread.title[:50] + ('...' if len(thread.title) > 50 else '')) if thread.title else 'Тред', 'url': ''}
+    ]
+    return render_template('thread.html', thread=thread, top_level_comments=top_level_comments, breadcrumbs=breadcrumbs)
 
 @bp.route('/thread/new', methods=['POST'])
 @login_required
@@ -70,11 +78,13 @@ def thread_new():
     """Create thread from sidebar form"""
     content = request.form.get('content') or request.form.get('body') or ''
     title = request.form.get('title') or ''
+    image_file = request.files.get('image')
 
     result = create_thread(
         user_id=current_user.id,
         title=title,
         content=content,
+        image_file=image_file,
     )
 
     if result.created:
@@ -88,6 +98,12 @@ def thread_new():
         flash('Тред слишком длинный', 'danger')
     elif result.reason == "rate_limited":
         flash('Слишком много тредов, подождите минутку', 'warning')
+    elif result.reason == "bad_image_type":
+        flash('Неверный формат изображения. Разрешены только JPG, PNG, GIF и WebP.', 'danger')
+    elif result.reason == "image_too_large":
+        flash('Изображение слишком большое. Максимальный размер: 10MB.', 'danger')
+    elif result.reason == "image_upload_failed":
+        flash('Не удалось загрузить изображение.', 'danger')
 
     return redirect(request.referrer or url_for('routes.threads'))
 
@@ -103,12 +119,14 @@ def feed():
         
         title = request.form.get('title', '').strip()
         content = request.form.get('content', '').strip()
+        image_file = request.files.get('image')
 
         result = create_update(
             actor_user_id=current_user.id,
             actor_is_admin=current_user.is_admin,
             title=title,
             content=content,
+            image_file=image_file,
         )
 
         if result.created:
@@ -121,12 +139,19 @@ def feed():
             flash('Заголовок слишком длинный', 'danger')
         elif result.reason == "too_long_content":
             flash('Содержимое слишком длинное', 'danger')
+        elif result.reason == "bad_image_type":
+            flash('Неверный формат изображения. Разрешены только JPG, PNG, GIF и WebP.', 'danger')
+        elif result.reason == "image_too_large":
+            flash('Изображение слишком большое. Максимальный размер: 10MB.', 'danger')
+        elif result.reason == "image_upload_failed":
+            flash('Не удалось загрузить изображение.', 'danger')
 
         return redirect(url_for('routes.feed'))
 
     # Show updates list
     page = request.args.get('page', 1, type=int)
     pagination = list_updates(page=page, per_page=20)
+    # Feed page doesn't show breadcrumbs (it's the main page)
     return render_template('feed.html', updates=pagination.items, pagination=pagination, is_admin=current_user.is_admin)
 
 @bp.route('/thread/<int:thread_id>/delete', methods=['POST'])
@@ -159,12 +184,16 @@ def delete_post(post_id):
 def add_comment(thread_id: int):
     content = request.form.get('content', "").strip()
     parent_id = request.form.get('parent_id', type=int)  # None if not provided
-    
+    reply_to_user_id = request.form.get('reply_to_user_id', type=int)  # None if not provided
+    image = request.files.get('image')
+
     result = create_comment(
         thread_id=thread_id, 
         author_id=current_user.id, 
         content=content,
-        parent_id=parent_id
+        parent_id=parent_id,
+        reply_to_user_id=reply_to_user_id,
+        image_file=request.files.get('image'),
     )
 
     if not result["ok"]:
@@ -176,6 +205,14 @@ def add_comment(thread_id: int):
             flash("Родительский комментарий не найден.", "danger")
         elif result["error"] == "parent_mismatch":
             flash("Ошибка: комментарий не принадлежит этому треду.", "danger")
+        elif result["error"] == "reply_to_user_not_found":
+            flash("Пользователь, на которого отвечают, не найден.", "danger")
+        elif result["error"] == "bad_type":
+            flash("Неверный формат изображения. Разрешены только JPG, PNG, GIF и WebP.", "danger")
+        elif result["error"] == "too_large":
+            flash("Изображение слишком большое. Максимальный размер: 10MB.", "danger")
+        elif result["error"] == "upload_failed":
+            flash("Не удалось загрузить изображение.", "danger")
         else:
             flash("Неизвестная ошибка.", "danger")
 

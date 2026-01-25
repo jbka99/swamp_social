@@ -4,20 +4,65 @@
 
 {% block content %}
 <script>
-function toggleReplyForm(commentId) {
-  const form = document.getElementById('reply-form-' + commentId);
-  if (form.style.display === 'none') {
-    form.style.display = 'block';
-    form.querySelector('textarea').focus();
-  } else {
-    form.style.display = 'none';
-    form.querySelector('textarea').value = '';
+let currentReplyTo = null;
+let currentReplyForm = null;
+
+function startReply(commentId, username, userId) {
+  // Hide any previously open reply form
+  if (currentReplyForm) {
+    currentReplyForm.style.display = 'none';
   }
+  
+  // Show reply context
+  const contextEl = document.getElementById('reply-context');
+  const contextUsername = document.getElementById('reply-context-username');
+  const replyForm = document.getElementById('main-comment-form');
+  const parentInput = document.getElementById('parent_comment_id');
+  const replyToUserIdInput = document.getElementById('reply_to_user_id');
+  const replyToUsernameInput = document.getElementById('reply_to_username');
+  const textarea = document.getElementById('comment-textarea');
+  
+  // Set reply context in form data attributes
+  contextUsername.textContent = username;
+  parentInput.value = commentId;
+  replyToUserIdInput.value = userId || '';
+  replyToUsernameInput.value = username || '';
+  
+  // Keep textarea empty - no @username insertion
+  textarea.value = '';
+  textarea.focus();
+  
+  contextEl.style.display = 'flex';
+  currentReplyTo = commentId;
+  currentReplyForm = null;
+  
+  // Scroll to form
+  replyForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function cancelReply() {
+  const contextEl = document.getElementById('reply-context');
+  const parentInput = document.getElementById('parent_comment_id');
+  const replyToUserIdInput = document.getElementById('reply_to_user_id');
+  const replyToUsernameInput = document.getElementById('reply_to_username');
+  const textarea = document.getElementById('comment-textarea');
+  
+  // Don't reset image input - preserve selected file
+  // const imageInput = document.getElementById('comment-image-input');
+  
+  contextEl.style.display = 'none';
+  parentInput.value = '';
+  replyToUserIdInput.value = '';
+  replyToUsernameInput.value = '';
+  textarea.value = '';
+  currentReplyTo = null;
+  // Image input and preview remain unchanged
 }
 </script>
-<div class="mb-3">
+<!-- Ненужная кнопка навигации назад -->
+<!-- <div class="mb-3">
   <a href="{{ url_for('routes.threads') }}" class="btn btn-sm btn-outline-secondary mb-2">← Назад к тредам</a>
-</div>
+</div> -->
 
 <div class="card bg-black border border-secondary shadow-sm mb-3">
   <div class="card-body py-3">
@@ -64,10 +109,16 @@ function toggleReplyForm(commentId) {
     </div>
 
     {% if thread.title %}
-      <h1 class="h4 mt-3 mb-3 fw-bold">{{ thread.title }}</h1>
+      <h2 class="h5 mt-3 mb-3 fw-bold">{{ thread.title }}</h2>
     {% endif %}
 
     <div class="post-content sw-textblock">{{ thread.content }}</div>
+
+    {% if thread.image_url %}
+      <div class="mt-3">
+        <img src="{{ thread.image_url }}" alt="Thread image" class="content-image" style="max-width: 100%; height: auto;">
+      </div>
+    {% endif %}
   </div>
 </div>
 
@@ -79,12 +130,32 @@ function toggleReplyForm(commentId) {
     {% if current_user.is_authenticated %}
     <form method="post"
          action="{{ url_for('routes.add_comment', thread_id=thread.id) }}"
-         class="mb-4">
+         enctype="multipart/form-data"
+         class="mb-4"
+         id="main-comment-form">
+      <input type="hidden" name="parent_id" id="parent_comment_id" value="">
+      <input type="hidden" name="reply_to_user_id" id="reply_to_user_id" value="">
+      <input type="hidden" name="reply_to_username" id="reply_to_username" value="">
+      
+      <div id="reply-context" class="reply-context" style="display: none;">
+        <span>Ответ → <span class="reply-context__username" id="reply-context-username"></span></span>
+        <button type="button" class="reply-context__cancel" onclick="cancelReply()">Отменить</button>
+      </div>
+      
       <textarea name="content"
+           id="comment-textarea"
            class="form-control bg-black text-light border-secondary mb-2"
-           rows="3"
-           placeholder="Ваш комментарий... (ответ: >>username)"
+           rows="4"
+           placeholder="Ваш комментарий..."
            required></textarea>
+
+      <div class="mb-2">
+        <input type="file" name="image" accept="image/*" class="form-control comment-image-input" id="comment-image-input">
+        <div class="image-preview-container mt-2" id="comment-image-preview" style="display: none;">
+          <img src="" alt="Preview" class="image-preview" style="max-width: 100%; max-height: 200px; object-fit: contain;">
+          <button type="button" class="btn btn-sm btn-outline-secondary mt-2 image-preview-remove">Убрать</button>
+        </div>
+      </div>
 
       <div class="d-flex justify-content-end">
         <button class="btn btn-outline-light btn-sm" type="submit">
@@ -95,68 +166,57 @@ function toggleReplyForm(commentId) {
     {# Comments list #}
     {% if top_level_comments %}
       {% macro render_comment(comment, depth=0, is_first=False) %}
-      <div class="d-flex gap-3 py-2 {% if depth > 0 %}ms-4 border-start border-secondary ps-3{% elif not is_first %}border-top border-secondary{% endif %}" 
+      <div class="comment-item {% if depth > 0 %}comment-item--reply{% endif %}" 
            id="comment-{{ comment.id }}">
-        <img src="{{ comment.author.avatar_url if comment.author.avatar_url else 'https://api.dicebear.com/7.x/identicon/svg?seed=' + comment.author.username }}"
-             alt="avatar"
-             class="rounded-circle"
-             style="width: 36px; height: 36px; object-fit: cover; flex-shrink: 0;">
+        <div class="d-flex gap-3">
+          <img src="{{ comment.author.avatar_url if comment.author.avatar_url else 'https://api.dicebear.com/7.x/identicon/svg?seed=' + comment.author.username }}"
+               alt="avatar"
+               class="rounded-circle"
+               style="width: 36px; height: 36px; object-fit: cover; flex-shrink: 0;">
 
-        <div class="flex-grow-1">
-          <div class="small text-muted mb-1">
-            <a href="{{ url_for('routes.user_profile', username=comment.author.username) }}"
-                class="text-decoration-none">
-                {{ comment.author.username }}
-            </a>
-            <span class="text-secondary"> · {{ comment.date_posted.strftime('%H:%M | %d.%m.%Y') }}</span>
+          <div class="flex-grow-1">
+            <div class="small text-muted mb-1">
+              <a href="{{ url_for('routes.user_profile', username=comment.author.username) }}"
+                  class="text-decoration-none post-author-name">
+                  {{ comment.author.username }}
+              </a>
+              <span class="text-secondary"> · {{ comment.date_posted.strftime('%H:%M | %d.%m.%Y') }}</span>
+            </div>
+
+            <div class="comment-content">
+              {% if comment.reply_to_user_id and comment.reply_to_user %}
+                <a href="{{ url_for('routes.user_profile', username=comment.reply_to_user.username) }}"
+                   class="mention">
+                  @{{ comment.reply_to_user.username }}
+                </a> 
+              {% endif %}
+              {{ comment.content | mentions_to_links }}
+              
+              {% if comment.image_url %}
+                <div class="mt-2">
+                  <img src="{{ comment.image_url }}" alt="Comment image" class="content-image content-image--comment" style="max-width: 100%; max-width: 520px; height: auto;">
+                </div>
+              {% endif %}
+            </div>
+
+            {# Reply button #}
+            {% if current_user.is_authenticated %}
+            <div class="mb-2">
+              <button class="btn btn-sm btn-outline-secondary" 
+                      type="button" 
+                      onclick="startReply('{{ comment.id }}', '{{ comment.author.username }}', '{{ comment.author.id }}')">
+                Ответить
+              </button>
+            </div>
+            {% endif %}
+
+            {# Render replies recursively #}
+            {% if comment.replies %}
+              {% for reply in comment.replies %}
+                {{ render_comment(reply, depth + 1, loop.first) }}
+              {% endfor %}
+            {% endif %}
           </div>
-
-          <div class="mt-1 mb-2" style="white-space: pre-wrap; word-wrap: break-word;">
-            {{ comment.content|e }}
-          </div>
-
-          {# Reply button and form #}
-          {% if current_user.is_authenticated %}
-          <div class="mb-2">
-            <button class="btn btn-sm btn-outline-secondary" 
-                    type="button" 
-                    onclick="toggleReplyForm('{{ comment.id }}')">
-              Ответить
-            </button>
-          </div>
-          
-          {# Reply form (hidden by default) #}
-          <div id="reply-form-{{ comment.id }}" style="display: none;" class="mb-3">
-            <form method="post"
-                 action="{{ url_for('routes.add_comment', thread_id=thread.id) }}"
-                 class="mt-2">
-              <input type="hidden" name="parent_id" value="{{ comment.id }}">
-              <textarea name="content"
-                   class="form-control bg-black text-light border-secondary mb-2"
-                   rows="2"
-                   placeholder="Ответить @{{ comment.author.username }}..."
-                   required></textarea>
-
-              <div class="d-flex justify-content-end gap-2">
-                <button class="btn btn-sm btn-outline-secondary" 
-                        type="button" 
-                        onclick="toggleReplyForm('{{ comment.id }}')">
-                  Отмена
-                </button>
-                <button class="btn btn-sm btn-outline-light" type="submit">
-                  Отправить
-                </button>
-              </div>
-            </form>
-          </div>
-          {% endif %}
-
-          {# Render replies recursively #}
-          {% if comment.replies %}
-            {% for reply in comment.replies %}
-              {{ render_comment(reply, depth + 1, loop.first) }}
-            {% endfor %}
-          {% endif %}
         </div>
       </div>
       {% endmacro %}
