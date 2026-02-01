@@ -1,1 +1,1 @@
-web: gunicorn run:app
+web: PYTHONPATH=. USE_EVENTLET=1 gunicorn -k eventlet -w 1 -b 0.0.0.0:$PORT --timeout 120 run:app

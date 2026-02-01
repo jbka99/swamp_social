@@ -5,11 +5,13 @@ services:
       - "8000:8000"
     environment:
       # локальная база (файл внутри контейнера)
+      IS_DEV: "1"
+      AUTO_CREATE_DB: "1"
+      SOCKETIO_ASYNC_MODE: "eventlet"
+      USE_EVENTLET: "1"
+      PYTHONPATH: "."
       DATABASE_URL: "sqlite:////app/instance/local.db"
       SECRET_KEY: "dev-secret-key"
-      # если у тебя есть флаги авто-создания/сидов — можно включить
-      # AUTO_CREATE_DB: "1"
-      # ADMIN_USERNAMES: "admin"
     volumes:
       # монтируем проект внутрь контейнера для живых правок
       - .:/app
@@ -17,6 +19,8 @@ services:
       - swamp_instance:/app/instance
     env_file:
       - .env
+    command: >
+      sh -c "gunicorn -k eventlet -w 1 -b 0.0.0.0:8000 --timeout 120 run:app"
 
 volumes:
   swamp_instance:

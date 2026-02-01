@@ -52,20 +52,10 @@ class Config:
     if not SECRET_KEY and IS_DEV:
         SECRET_KEY = "dev-secret-key"
     
-    uri = os.environ.get('DATABASE_URL')
-    if uri and uri.startswith("postgres://"):
-        uri = uri.replace("postgres://", "postgresql://", 1)
-    
-    if not uri and IS_DEV:
-        # safe local default - will be resolved to absolute path in create_app
-        uri = "sqlite:///instance/local.db"
-    
-    # Resolve SQLite paths to absolute if in dev mode
-    if uri and uri.startswith('sqlite:///') and IS_DEV:
-        uri = _resolve_sqlite_path(uri, basedir)
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        'DATABASE_URL',
+        'sqlite:////app/instance/local.db'
+    )
 
-    SQLALCHEMY_DATABASE_URI = uri
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-    # Enable only for local/dev if you really want auto-create (migrations still recommended)
-    AUTO_CREATE_DB = os.environ.get("AUTO_CREATE_DB", "0") in {"1", "true", "True"}
+    AUTO_CREATE_DB = os.environ.get("AUTO_CREATE_DB", "0") == "1"

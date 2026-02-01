@@ -5,7 +5,7 @@ import cloudinary.uploader
 
 from app.routes import bp
 from app.extensions import db
-from app.models import User, Thread, Comment
+from app.models import User, Thread, Comment, PostVote, CommentVote
 from app.services import (
     create_thread,
     delete_thread,
@@ -15,6 +15,8 @@ from app.services import (
     list_updates,
     create_comment,
     delete_comment,
+    vote_post,
+    vote_comment,
 )
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -31,10 +33,31 @@ def index():
 @login_required
 def threads():
     """Thread listing page (replaces old feed behavior)"""
+    sort = request.args.get('sort', 'new')
     page = request.args.get('page', 1, type=int)
-    pagination = get_threads_feed(page=page, per_page=20)
-    threads = Thread.query.order_by(Thread.date_posted.desc()).all()
-    return render_template('threads.html', threads=pagination.items, pagination=pagination)
+
+    pagination = get_threads_feed(
+        page=page, 
+        per_page=20, 
+        sort=sort
+    )
+    # Load current user's votes for threads so highlight persists after refresh
+    if pagination.items and current_user.is_authenticated:
+        post_ids = [t.id for t in pagination.items]
+        votes = PostVote.query.filter(
+            PostVote.user_id == current_user.id,
+            PostVote.post_id.in_(post_ids)
+        ).all()
+        votes_by_post = {v.post_id: v.value for v in votes}
+        for t in pagination.items:
+            t.my_vote = votes_by_post.get(t.id, 0)
+
+    return render_template(
+        'threads.html', 
+        threads=pagination.items, 
+        pagination=pagination, 
+        sort=sort
+    )
 
 @bp.route('/thread/<int:thread_id>')
 @login_required
@@ -57,6 +80,23 @@ def thread_detail(thread_id):
     if thread is None:
         flash('Тред не найден', 'danger')
         return redirect(url_for('routes.threads'))
+
+    # Current user's vote for thread and comments (for highlight on load)
+    thread_my_vote = 0
+    comment_my_votes = {}
+    if current_user.is_authenticated:
+        pv = PostVote.query.filter_by(user_id=current_user.id, post_id=thread.id).first()
+        thread_my_vote = pv.value if pv else 0
+        comment_ids = [c.id for c in thread.comments]
+        if comment_ids:
+            cvs = CommentVote.query.filter(
+                CommentVote.user_id == current_user.id,
+                CommentVote.comment_id.in_(comment_ids)
+            ).all()
+            comment_my_votes = {v.comment_id: v.value for v in cvs}
+    thread.my_vote = thread_my_vote
+    for c in thread.comments:
+        c.my_vote = comment_my_votes.get(c.id, 0)
     
     # Separate top-level comments (no parent) from replies
     top_level_comments = [c for c in thread.comments if c.parent_id is None]
@@ -247,3 +287,37 @@ def delete_comment_route(thread_id: int, comment_id: int):
 #     Thread.query.get_or_404(thread_id) # 404 если треда нет
 #     comment_count = Comment.query.filter_by(post_id=thread_id).count()
 #     return jsonify({"thread_id": thread_id, "comment_count": comment_count})
+
+# votes
+@bp.route('/thread/<int:thread_id>/vote', methods=['POST'])
+@login_required
+def vote_post_route(thread_id: int):
+    data = request.get_json(silent=True) or {}
+    value = data.get('value')
+
+    if value not in (-1, 1):
+        return jsonify({"success": False, "reason": "invalid_value"}), 400
+
+    result = vote_post(post_id=thread_id, user_id=current_user.id, value=value)
+
+    if result.success:
+        return jsonify({"success": True, "score": result.score, "my_vote": result.my_vote})
+
+    return jsonify({"success": False, "reason": result.reason}), 400
+
+@bp.route('/thread/<int:thread_id>/comment/<int:comment_id>/vote', methods=['POST'])
+@login_required
+def vote_comment_route(thread_id: int, comment_id: int):
+    data = request.get_json(silent=True) or {}
+    value = data.get('value')
+
+    if value not in (-1, 1):
+        return jsonify({"success": False, "reason": "invalid_value"}), 400
+
+    result = vote_comment(comment_id=comment_id, user_id=current_user.id, value=value)
+    
+    if result.success:
+        return jsonify({"success": True, "score": result.score, "my_vote": result.my_vote})
+
+    return jsonify({"success": False, "reason": result.reason}), 400
+

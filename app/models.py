@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from datetime import datetime, timezone
 from app.extensions import db, login_manager
+from sqlalchemy import CheckConstraint, UniqueConstraint
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -38,6 +39,39 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return f'<User {self.username}>'
 
+class PostVote(db.Model):
+    __tablename__ = 'post_votes'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False, index=True)
+    value = db.Column(db.SmallInteger, nullable=False)
+
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, 
+                            default=lambda: datetime.now(timezone.utc),
+                            onupdate=lambda: datetime.now(timezone.utc))
+    __table_args__ = (
+        UniqueConstraint('user_id', 'post_id', name='uq_post_votes_user_post'),
+        CheckConstraint('value in (1, -1)', name='ck_post_vote_value'),
+    )
+
+class CommentVote(db.Model):
+    __tablename__ = 'comment_votes'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    comment_id = db.Column(db.Integer, db.ForeignKey('comment.id'), nullable=False, index=True)
+    value = db.Column(db.SmallInteger, nullable=False)
+
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, 
+                            default=lambda: datetime.now(timezone.utc),
+                            onupdate=lambda: datetime.now(timezone.utc))
+    __table_args__ = (
+        UniqueConstraint('user_id', 'comment_id', name='uq_comment_votes_user_comment'),
+        CheckConstraint('value in (1, -1)', name='ck_comment_vote_value'),
+    )
+    
+
 class Thread(db.Model):
     __tablename__ = 'post'  # Keep existing table name to avoid migration
     id = db.Column(db.Integer, primary_key=True)
@@ -45,9 +79,11 @@ class Thread(db.Model):
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     image_url = db.Column(db.String(256), nullable=True)
-    comment_count = db.Column(db.Integer, default=0)
+    comment_count = db.Column(db.Integer, nullable=False, default=0)
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    score = db.Column(db.Integer, nullable=False, default=0)
 
     def __repr__(self):
         return f"Thread('{self.title}', '{self.date_posted}')"
@@ -71,6 +107,8 @@ class Comment(db.Model):
     parent = db.relationship('Comment', remote_side=[id], backref=db.backref('replies', lazy=True))
 
     image_url = db.Column(db.String(256), nullable=True)
+
+    score = db.Column(db.Integer, nullable=False, default=0)
 
     @property
     def post(self):

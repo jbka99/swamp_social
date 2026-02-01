@@ -3,6 +3,9 @@
 {% block title %}Треды{% endblock %}
 
 {% block content %}
+<a href="?sort=new" class="{{ 'active' if sort == 'new' else '' }}">Новые</a>
+<a href="?sort=top" class="{{ 'active' if sort == 'top' else '' }}">Топ</a>
+<a href="?sort=discussed" class="{{ 'active' if sort == 'discussed' else '' }}">Обсуждаемые</a>
 
 {% if threads and threads|length > 0 %}
   <div class="posts-list">

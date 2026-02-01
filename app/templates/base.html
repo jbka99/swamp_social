@@ -607,5 +607,112 @@
     })();
   </script>
 
+  <script>
+    // Vote (thread / comment) — delegation + anti-double
+(function() {
+  const pending = new Set();
+
+  function key(type, id) { return type + ":" + id; }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.addEventListener('click', function(e) {
+      var btn = e.target.closest('.js-vote-thread');
+      if (btn) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var voteEl = btn.closest('.vote');
+        if (!voteEl) return;
+
+        var threadId = voteEl.getAttribute('data-thread-id');
+        var value = parseInt(btn.getAttribute('data-value'), 10);
+        if (!threadId || (value !== 1 && value !== -1)) return;
+
+        const k = key("t", threadId);
+        if (pending.has(k)) return;
+        pending.add(k);
+
+        var scoreEl = voteEl.querySelector('.js-thread-score');
+        var url = '/thread/' + threadId + '/vote';
+
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ value: value }),
+          credentials: 'same-origin'
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            if (scoreEl) scoreEl.textContent = data.score;
+            var likeBtn = voteEl.querySelector('.js-vote-thread[data-value="1"]');
+            var dislikeBtn = voteEl.querySelector('.js-vote-thread[data-value="-1"]');
+            if (likeBtn) likeBtn.classList.remove('vote-btn-active', 'vote-btn-active--dislike');
+            if (dislikeBtn) dislikeBtn.classList.remove('vote-btn-active', 'vote-btn-active--dislike');
+            if (data.my_vote === 1 && likeBtn) likeBtn.classList.add('vote-btn-active');
+            if (data.my_vote === -1 && dislikeBtn) dislikeBtn.classList.add('vote-btn-active--dislike');
+          }
+        })
+        .finally(() => pending.delete(k));
+
+        return;
+      }
+
+      btn = e.target.closest('.js-vote-comment');
+      if (btn) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var voteEl = btn.closest('.vote');
+        if (!voteEl) return;
+
+        var commentId = voteEl.getAttribute('data-comment-id');
+        var threadId = voteEl.getAttribute('data-thread-id');
+        var value = parseInt(btn.getAttribute('data-value'), 10);
+        if (!commentId || !threadId || (value !== 1 && value !== -1)) return;
+
+        const k = key("c", commentId);
+        if (pending.has(k)) return;
+        pending.add(k);
+
+        var scoreEl = voteEl.querySelector('.js-comment-score');
+        var url = '/thread/' + threadId + '/comment/' + commentId + '/vote';
+
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ value: value }),
+          credentials: 'same-origin'
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            if (scoreEl) scoreEl.textContent = data.score;
+            var likeBtn = voteEl.querySelector('.js-vote-comment[data-value="1"]');
+            var dislikeBtn = voteEl.querySelector('.js-vote-comment[data-value="-1"]');
+            if (likeBtn) likeBtn.classList.remove('vote-btn-active', 'vote-btn-active--dislike');
+            if (dislikeBtn) dislikeBtn.classList.remove('vote-btn-active', 'vote-btn-active--dislike');
+            if (data.my_vote === 1 && likeBtn) likeBtn.classList.add('vote-btn-active');
+            if (data.my_vote === -1 && dislikeBtn) dislikeBtn.classList.add('vote-btn-active--dislike');
+          }
+        })
+        .finally(() => pending.delete(k));
+      }
+    });
+  });
+})();
+  </script>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+  (function () {
+    window.SWAMP_SOCKET = io({
+      transports: ["websocket", "polling"],
+      timeout: 8000,
+      reconnectionAttempts: 5
+    });
+  })();
+</script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

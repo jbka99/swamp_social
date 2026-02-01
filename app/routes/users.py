@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 
 from app.routes import bp
 from app.extensions import db
-from app.models import User, Thread
+from app.models import User, Thread, PostVote
 
 import cloudinary.uploader
 
@@ -98,6 +98,17 @@ def user_profile(username):
     
     user = User.query.filter_by(username=username).first_or_404()
     threads = Thread.query.filter_by(author=user).order_by(Thread.date_posted.desc()).all()
+
+    # Current user's votes for threads (highlight persists after refresh)
+    if threads and current_user.is_authenticated:
+        post_ids = [t.id for t in threads]
+        votes = PostVote.query.filter(
+            PostVote.user_id == current_user.id,
+            PostVote.post_id.in_(post_ids)
+        ).all()
+        votes_by_post = {v.post_id: v.value for v in votes}
+        for t in threads:
+            t.my_vote = votes_by_post.get(t.id, 0)
     
     # Set breadcrumbs
     if current_user.is_authenticated and username == current_user.username:

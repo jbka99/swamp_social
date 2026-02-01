@@ -9,7 +9,7 @@ from sqlalchemy import func
 import cloudinary.uploader
 
 from app.extensions import db
-from app.models import Thread, User, Update, Comment
+from app.models import Thread, User, Update, Comment, PostVote, CommentVote
 
 AlLOWED_MIME = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 MAX_BYTES = 10 * 1024 * 1024 # 10MB
@@ -181,10 +181,19 @@ def admin_bulk_delete_users(
     return BulkDeleteUsersResult(deleted=True, deleted_count=len(users), reason="ok")
 
 # Thread listing (replaces old feed)
-def get_threads_feed(page: int = 1, per_page: int = 20):
+def get_threads_feed(page: int = 1, per_page: int = 20, sort: str = "new"):
     page = max(int(page), 1)
     per_page = min(max(int(per_page), 1), 50)
-    query = Thread.query.order_by(Thread.date_posted.desc())
+
+    query = Thread.query
+
+    if sort == "top":
+        query = query.order_by(Thread.score.desc(), Thread.date_posted.desc())
+    elif sort == "discussed":
+        query = query.order_by(Thread.comment_count.desc(), Thread.date_posted.desc())
+    else: # new
+        query = query.order_by(Thread.date_posted.desc())
+        
     return query.paginate(page=page, per_page=per_page, error_out=False)
 
 # Backward compatibility alias
@@ -417,3 +426,74 @@ def create_comment(
     return {"ok": True, "error": None, "comment_id": comment.id}
 
 
+@dataclass(frozen=True)
+class VotePostResult:
+    success: bool
+    reason: str  # "ok" | "not_found" | "invalid_value"
+    score: Optional[int] = None
+    my_vote: Optional[int] = None  # 1, -1, or 0 (removed)
+
+
+@dataclass(frozen=True)
+class VoteCommentResult:
+    success: bool
+    reason: str  # "ok" | "not_found" | "invalid_value"
+    score: Optional[int] = None
+    my_vote: Optional[int] = None  # 1, -1, or 0 (removed)
+
+
+def vote_post(post_id: int, user_id: int, value: int) -> VotePostResult:
+    post = db.session.get(Post, int(post_id))
+
+    if post is None:
+        return VotePostResult(success=False, reason="not_found")
+    if value not in [-1, 1]:
+        return VotePostResult(success=False, reason="invalid_value")
+
+    post_vote = (
+        PostVote.query
+        .filter_by(user_id=user_id, post_id=post_id)
+        .first()
+    )
+    old = post_vote.value if post_vote else 0
+
+    if post_vote and post_vote.value == value:
+        db.session.delete(post_vote)
+        new = 0
+    else:
+        new = value
+        if post_vote is None:
+            post_vote = PostVote(user_id=user_id, post_id=post_id, value=value)
+            db.session.add(post_vote)
+        else:
+            post_vote.value = value
+
+    post.score += (new - old)
+    db.session.commit()
+    return VotePostResult(success=True, reason="ok", score=post.score, my_vote=new)
+
+def vote_comment(comment_id: int, user_id: int, value: int) -> VoteCommentResult:
+    comment = db.session.get(Comment, int(comment_id))
+    if comment is None:
+        return VoteCommentResult(success=False, reason="not_found")
+    if value not in [-1, 1]:
+        return VoteCommentResult(success=False, reason="invalid_value")
+    comment_vote = (
+        CommentVote.query
+        .filter_by(user_id=user_id, comment_id=comment_id)
+        .first()
+    )
+    old = comment_vote.value if comment_vote else 0
+    if comment_vote and comment_vote.value == value:
+        db.session.delete(comment_vote)
+        new = 0
+    else:
+        new = value
+        if comment_vote is None:
+            comment_vote = CommentVote(user_id=user_id, comment_id=comment_id, value=value)
+            db.session.add(comment_vote)
+        else:
+            comment_vote.value = value
+    comment.score += (new - old)
+    db.session.commit()
+    return VoteCommentResult(success=True, reason="ok", score=comment.score, my_vote=new)

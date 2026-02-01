@@ -121,218 +121,285 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- <div class="mb-3">
   <a href="{{ url_for('routes.threads') }}" class="btn btn-sm btn-outline-secondary mb-2">← Назад к тредам</a>
 </div> -->
-
-<div class="card bg-black border border-secondary shadow-sm mb-3">
-  <div class="card-body py-3">
-    <div class="d-flex align-items-start justify-content-between gap-3">
-      <div class="d-flex align-items-start gap-3">
-        {% set author_url = url_for('routes.index')
-          if current_user.is_authenticated and thread.author.username == current_user.username
-          else url_for('routes.user_profile', username=thread.author.username)
-        %}
-        <a href="{{ author_url }}" class="text-decoration-none">
-          <img
-            src="{{ thread.author.avatar_url if thread.author.avatar_url else 'https://api.dicebear.com/7.x/identicon/svg?seed=' + thread.author.username }}"
-            alt="AV"
-            class="rounded-circle border border-secondary avatar-sm"
-            referrerpolicy="no-referrer"
-          >
-        </a>
-
-        <div class="lh-sm">
-          <a class="text-decoration-none post-author-name"
-             href="{{ author_url }}">
-            {{ thread.author.display_name or thread.author.username }}
+<div id="thread-root" data-thread-id="{{ thread.id }}">
+  <div class="card bg-black border border-secondary shadow-sm mb-3">
+    <div class="card-body py-3">
+      <div class="d-flex align-items-start justify-content-between gap-3">
+        <div class="d-flex align-items-start gap-3">
+          {% set author_url = url_for('routes.index')
+            if current_user.is_authenticated and thread.author.username == current_user.username
+            else url_for('routes.user_profile', username=thread.author.username)
+          %}
+          <a href="{{ author_url }}" class="text-decoration-none">
+            <img
+              src="{{ thread.author.avatar_url if thread.author.avatar_url else 'https://api.dicebear.com/7.x/identicon/svg?seed=' + thread.author.username }}"
+              alt="AV"
+              class="rounded-circle border border-secondary avatar-sm"
+              referrerpolicy="no-referrer"
+            >
           </a>
 
-          <div class="text-secondary small">
-            @{{ thread.author.username }} · {{ thread.date_posted.strftime('%H:%M | %d.%m.%Y') }}
+          <div class="lh-sm">
+            <a class="text-decoration-none post-author-name"
+              href="{{ author_url }}">
+              {{ thread.author.display_name or thread.author.username }}
+            </a>
+
+            <div class="text-secondary small">
+              @{{ thread.author.username }} · {{ thread.date_posted.strftime('%H:%M | %d.%m.%Y') }}
+            </div>
           </div>
         </div>
+
+        {% if current_user.is_admin or thread.author == current_user %}
+          <form action="{{ url_for('routes.delete_thread_route', thread_id=thread.id) }}" method="POST" class="m-0">
+            <button
+              type="submit"
+              class="btn btn-sw-danger btn-sm"
+              onclick="return confirm('Удалить этот тред?')"
+              aria-label="Удалить тред"
+              title="Удалить"
+            >
+              🗑
+            </button>
+          </form>
+        {% endif %}
       </div>
 
-      {% if current_user.is_admin or thread.author == current_user %}
-        <form action="{{ url_for('routes.delete_thread_route', thread_id=thread.id) }}" method="POST" class="m-0">
-          <button
-            type="submit"
-            class="btn btn-sw-danger btn-sm"
-            onclick="return confirm('Удалить этот тред?')"
-            aria-label="Удалить тред"
-            title="Удалить"
-          >
-            🗑
-          </button>
-        </form>
+      {% if thread.title %}
+        <h2 class="h5 mt-3 mb-3 fw-bold">{{ thread.title }}</h2>
+      {% endif %}
+
+      <div class="post-content sw-textblock">{{ thread.content|linkify }}</div>
+
+      {% if thread.image_url %}
+        <div class="mt-3">
+          <img src="{{ thread.image_url }}" alt="Thread image" class="content-image" style="max-width: 100%; height: auto;">
+        </div>
+      {% endif %}
+
+      {% if current_user.is_authenticated %}
+      <div class="vote mt-3 d-flex align-items-center gap-1" data-thread-id="{{ thread.id }}">
+        <button class="js-vote-thread btn btn-sm btn-outline-secondary p-1 {{ 'vote-btn-active' if (thread.my_vote|default(0)) == 1 else '' }}" data-value="1" type="button" aria-label="Лайк">👍</button>
+        <span class="js-thread-score small text-secondary" style="min-width: 1.5rem; text-align: center;">{{ thread.score }}</span>
+        <button class="js-vote-thread btn btn-sm btn-outline-secondary p-1 {{ 'vote-btn-active--dislike' if (thread.my_vote|default(0)) == -1 else '' }}" data-value="-1" type="button" aria-label="Дизлайк">👎</button>
+      </div>
+      {% else %}
+      <div class="mt-3 small text-secondary">{{ thread.score }}</div>
       {% endif %}
     </div>
-
-    {% if thread.title %}
-      <h2 class="h5 mt-3 mb-3 fw-bold">{{ thread.title }}</h2>
-    {% endif %}
-
-    <div class="post-content sw-textblock">{{ thread.content|linkify }}</div>
-
-    {% if thread.image_url %}
-      <div class="mt-3">
-        <img src="{{ thread.image_url }}" alt="Thread image" class="content-image" style="max-width: 100%; height: auto;">
-      </div>
-    {% endif %}
   </div>
-</div>
 
-<div class="card bg-black border border-secondary shadow-sm">
-  <div class="card-body py-3">
-    <h5 class="mb-3">Комментарии</h5>
-    
-    {# Comment form #}
-    {% if current_user.is_authenticated %}
-    <form method="post"
-         action="{{ url_for('routes.add_comment', thread_id=thread.id) }}"
-         enctype="multipart/form-data"
-         class="mb-4"
-         id="main-comment-form">
-      <input type="hidden" name="parent_id" id="parent_comment_id" value="">
-      <input type="hidden" name="reply_to_user_id" id="reply_to_user_id" value="">
-      <input type="hidden" name="reply_to_username" id="reply_to_username" value="">
+  <div class="card bg-black border border-secondary shadow-sm">
+    <div class="card-body py-3">
+      <h5 class="mb-3">Комментарии</h5>
       
-      <div id="reply-context" class="reply-context" style="display: none;">
-        <span>Ответ → <span class="reply-context__username" id="reply-context-username"></span></span>
-        <button type="button" class="reply-context__cancel" onclick="cancelReply()">Отменить</button>
-      </div>
-      
-      <textarea name="content"
-           id="comment-textarea"
-           class="form-control bg-black text-light border-secondary mb-2 js-autogrow"
-           rows="4"
-           placeholder="Ваш комментарий..."
-           required></textarea>
-
-      <!-- <div class="mb-2">
-        <input type="file" name="image" accept="image/*" class="form-control comment-image-input" id="comment-image-input">
-        <div class="image-preview-container mt-2" id="comment-image-preview" style="display: none;">
-          <img src="" alt="Preview" class="image-preview" style="max-width: 100%; max-height: 200px; object-fit: contain;">
-          <button type="button" class="btn btn-sm btn-outline-secondary mt-2 image-preview-remove">Убрать</button>
+      {# Comment form #}
+      {% if current_user.is_authenticated %}
+      <form method="post"
+          action="{{ url_for('routes.add_comment', thread_id=thread.id) }}"
+          enctype="multipart/form-data"
+          class="mb-4"
+          id="main-comment-form">
+        <input type="hidden" name="parent_id" id="parent_comment_id" value="">
+        <input type="hidden" name="reply_to_user_id" id="reply_to_user_id" value="">
+        <input type="hidden" name="reply_to_username" id="reply_to_username" value="">
+        
+        <div id="reply-context" class="reply-context" style="display: none;">
+          <span>Ответ → <span class="reply-context__username" id="reply-context-username"></span></span>
+          <button type="button" class="reply-context__cancel" onclick="cancelReply()">Отменить</button>
         </div>
-      </div> -->
+        
+        <textarea name="content"
+            id="comment-textarea"
+            class="form-control bg-black text-light border-secondary mb-2 js-autogrow"
+            rows="4"
+            placeholder="Ваш комментарий..."
+            required></textarea>
 
-      <div class="mb-2 d-flex align-items-center gap-2 flex-wrap">
-        <input
-          type="file"
-          name="image"
-          accept="image/*"
-          id="comment-image-input"
-          class="d-none"
-        >
+        <!-- <div class="mb-2">
+          <input type="file" name="image" accept="image/*" class="form-control comment-image-input" id="comment-image-input">
+          <div class="image-preview-container mt-2" id="comment-image-preview" style="display: none;">
+            <img src="" alt="Preview" class="image-preview" style="max-width: 100%; max-height: 200px; object-fit: contain;">
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-2 image-preview-remove">Убрать</button>
+          </div>
+        </div> -->
 
-        <label for="comment-image-input"
-          class="btn btn-sm btn-outline-secondary attach-btn"
-          id="comment-attach-btn"
-          title="Прикрепить изображение">
-        📎
-        </label>
+        <div class="mb-2 d-flex align-items-center gap-2 flex-wrap">
+          <input
+            type="file"
+            name="image"
+            accept="image/*"
+            id="comment-image-input"
+            class="d-none"
+          >
 
-        <div class="image-preview-container mt-2 d-none" id="comment-image-preview">
-          <span class="small text-secondary d-block mb-2" id="comment-file-name"></span>
-          <img src="" alt="Preview" class="image-preview" 
-          style="max-width: 100%; max-height: 200px; object-fit: contain;">
-          <button type="button" 
-              class="btn btn-sm btn-outline-secondary mt-2 image-preview-remove">
-            Убрать
+          <label for="comment-image-input"
+            class="btn btn-sm btn-outline-secondary attach-btn"
+            id="comment-attach-btn"
+            title="Прикрепить изображение">
+          📎
+          </label>
+
+          <div class="image-preview-container mt-2 d-none" id="comment-image-preview">
+            <span class="small text-secondary d-block mb-2" id="comment-file-name"></span>
+            <img src="" alt="Preview" class="image-preview" 
+            style="max-width: 100%; max-height: 200px; object-fit: contain;">
+            <button type="button" 
+                class="btn btn-sm btn-outline-secondary mt-2 image-preview-remove">
+              Убрать
+            </button>
+          </div>
+          </div>
+
+        <div class="d-flex justify-content-end">
+          <button class="btn btn-outline-light btn-sm" type="submit">
+            Комментировать
           </button>
         </div>
-        </div>
+      </form>
+      {# Comments list #}
+      {% if top_level_comments %}
+        {% macro render_comment(comment, depth=0, is_first=False) %}
+        <div class="comment-item {% if depth > 0 %}comment-item--reply{% endif %}" 
+            id="comment-{{ comment.id }}">
+          <div class="d-flex gap-3">
+            <img src="{{ comment.author.avatar_url if comment.author.avatar_url else 'https://api.dicebear.com/7.x/identicon/svg?seed=' + comment.author.username }}"
+                alt="avatar"
+                class="rounded-circle"
+                style="width: 36px; height: 36px; object-fit: cover; flex-shrink: 0;">
 
-      <div class="d-flex justify-content-end">
-        <button class="btn btn-outline-light btn-sm" type="submit">
-          Комментировать
-        </button>
-      </div>
-    </form>
-    {# Comments list #}
-    {% if top_level_comments %}
-      {% macro render_comment(comment, depth=0, is_first=False) %}
-      <div class="comment-item {% if depth > 0 %}comment-item--reply{% endif %}" 
-           id="comment-{{ comment.id }}">
-        <div class="d-flex gap-3">
-          <img src="{{ comment.author.avatar_url if comment.author.avatar_url else 'https://api.dicebear.com/7.x/identicon/svg?seed=' + comment.author.username }}"
-               alt="avatar"
-               class="rounded-circle"
-               style="width: 36px; height: 36px; object-fit: cover; flex-shrink: 0;">
-
-          <div class="flex-grow-1">
-            <div class="small text-muted mb-1">
-              <a href="{{ url_for('routes.user_profile', username=comment.author.username) }}"
-                  class="text-decoration-none post-author-name">
-                  {{ comment.author.username }}
-              </a>
-              <span class="text-secondary"> · {{ comment.date_posted.strftime('%H:%M | %d.%m.%Y') }}</span>
-            </div>
-
-            {% if current_user.is_admin or comment.author == current_user %}
-            <div class="d-flex justify-content-end mt-1">
-                <form 
-                     action="{{ url_for('routes.delete_comment_route', thread_id=thread.id, comment_id=comment.id) }}"
-                     method="POST"
-                     class="m-0"
-                >
-                  <button 
-                    type="submit"
-                    class="btn btn-sm btn-outline-danger"
-                    onclick="return confirm('Удалить этот комментарий?')"
-                    title="Удалить"
-                  >
-                    🗑
-                  </button>
-                </form>
+            <div class="flex-grow-1">
+              <div class="small text-muted mb-1">
+                <a href="{{ url_for('routes.user_profile', username=comment.author.username) }}"
+                    class="text-decoration-none post-author-name">
+                    {{ comment.author.username }}
+                </a>
+                <span class="text-secondary"> · {{ comment.date_posted.strftime('%H:%M | %d.%m.%Y') }}</span>
               </div>
-              {% endif %}
-          
-            <div class="comment-content">
-              {% if comment.reply_to_user_id and comment.reply_to_user %}
-                <a href="{{ url_for('routes.user_profile', username=comment.reply_to_user.username) }}"
-                   class="mention">
-                  @{{ comment.reply_to_user.username }}
-                </a> 
-              {% endif %}
-              {{ comment.content | mentions_to_links }}
-              
-              {% if comment.image_url %}
-                <div class="mt-2">
-                  <img src="{{ comment.image_url }}" alt="Comment image" class="content-image content-image--comment" style="max-width: 100%; max-width: 520px; height: auto;">
+
+              {% if current_user.is_admin or comment.author == current_user %}
+              <div class="d-flex justify-content-end mt-1">
+                  <form 
+                      action="{{ url_for('routes.delete_comment_route', thread_id=thread.id, comment_id=comment.id) }}"
+                      method="POST"
+                      class="m-0"
+                  >
+                    <button 
+                      type="submit"
+                      class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('Удалить этот комментарий?')"
+                      title="Удалить"
+                    >
+                      🗑
+                    </button>
+                  </form>
                 </div>
+                {% endif %}
+            
+              <div class="comment-content">
+                {% if comment.reply_to_user_id and comment.reply_to_user %}
+                  <a href="{{ url_for('routes.user_profile', username=comment.reply_to_user.username) }}"
+                    class="mention">
+                    @{{ comment.reply_to_user.username }}
+                  </a> 
+                {% endif %}
+                {{ comment.content | mentions_to_links }}
+                
+                {% if comment.image_url %}
+                  <div class="mt-2">
+                    <img src="{{ comment.image_url }}" alt="Comment image" class="content-image content-image--comment" style="max-width: 100%; max-width: 520px; height: auto;">
+                  </div>
+                {% endif %}
+              </div>
+
+              {# Vote and reply #}
+              {% if current_user.is_authenticated %}
+              <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                <div class="vote d-flex align-items-center gap-1" data-comment-id="{{ comment.id }}" data-thread-id="{{ thread.id }}">
+                  <button class="js-vote-comment btn btn-sm btn-outline-secondary p-1 {{ 'vote-btn-active' if (comment.my_vote|default(0)) == 1 else '' }}" data-value="1" type="button" aria-label="Лайк">👍</button>
+                  <span class="js-comment-score small text-secondary" style="min-width: 1.5rem; text-align: center;">{{ comment.score }}</span>
+                  <button class="js-vote-comment btn btn-sm btn-outline-secondary p-1 {{ 'vote-btn-active--dislike' if (comment.my_vote|default(0)) == -1 else '' }}" data-value="-1" type="button" aria-label="Дизлайк">👎</button>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" 
+                        type="button" 
+                        onclick="startReply('{{ comment.id }}', '{{ comment.author.username }}', '{{ comment.author.id }}')">
+                  ↩
+                </button>
+              </div>
+              {% else %}
+              <div class="mt-1 small text-secondary">{{ comment.score }}</div>
+              {% endif %}
+
+              {# Render replies recursively #}
+              {% if comment.replies %}
+                {% for reply in comment.replies %}
+                  {{ render_comment(reply, depth + 1, loop.first) }}
+                {% endfor %}
               {% endif %}
             </div>
-
-            {# Reply button #}
-            {% if current_user.is_authenticated %}
-            <div class="d-flex justify-content-end mt-1">
-              <button class="btn btn-sm btn-outline-secondary" 
-                      type="button" 
-                      onclick="startReply('{{ comment.id }}', '{{ comment.author.username }}', '{{ comment.author.id }}')">
-                ↩
-              </button>
-            </div>
-            {% endif %}
-
-            {# Render replies recursively #}
-            {% if comment.replies %}
-              {% for reply in comment.replies %}
-                {{ render_comment(reply, depth + 1, loop.first) }}
-              {% endfor %}
-            {% endif %}
           </div>
         </div>
-      </div>
-      {% endmacro %}
+        {% endmacro %}
 
-      {% for c in top_level_comments %}
-        {{ render_comment(c, 0, loop.first) }}
-      {% endfor %}
-    {% else %}
-      <div class="text-muted small py-2">
-        Комментариев пока нет.
-      </div>
+        {% for c in top_level_comments %}
+          {{ render_comment(c, 0, loop.first) }}
+        {% endfor %}
+      {% else %}
+        <div class="text-muted small py-2">
+          Комментариев пока нет.
+        </div>
+      {% endif %}
     {% endif %}
-  {% endif %}
-</div>
+  </div>
+
+</div> {# конец thread-root #}
+
+{% endblock %} {# ← ЗАКРЫЛИ block content #}
+
+{% block scripts %}
+<script>
+(function () {
+  const socket = window.SWAMP_SOCKET;
+  if (!socket) return;
+
+  const root = document.getElementById('thread-root');
+  if (!root) return;
+
+  const threadId = Number(root.dataset.threadId);
+  if (!threadId) return;
+
+  socket.emit('join_thread', { thread_id: threadId });
+
+  window.addEventListener('beforeunload', () => {
+    socket.emit('leave_thread', { thread_id: threadId });
+  });
+
+  const LIST_SELECTOR = '#comments-list';
+
+  socket.on('comment_created', (data) => {
+    if (Number(data.thread_id) !== threadId) return;
+    const list = document.querySelector(LIST_SELECTOR);
+    if (list) list.insertAdjacentHTML('beforeend', data.html);
+  });
+
+  socket.on('comment_deleted', (data) => {
+    if (Number(data.thread_id) !== threadId) return;
+    const el = document.querySelector(`[data-comment-id="${data.comment_id}"]`);
+    if (el) el.remove();
+  });
+
+  socket.on('comment_score_updated', (data) => {
+    const scoreEl = document.querySelector(
+      `[data-comment-id="${data.comment_id}"] .js-comment-score`
+    );
+    if (scoreEl) scoreEl.textContent = data.score;
+  });
+
+  socket.on('post_score_updated', (data) => {
+    const scoreEl = document.querySelector('.js-thread-score');
+    if (scoreEl) scoreEl.textContent = data.score;
+  });
+})();
+</script>
 {% endblock %}

@@ -145,6 +145,21 @@ h1,h2,h3,h4,h5,h6{
   transform: translateY(-2px);
 }
 
+/* Клик по всей карточке ведёт в тред; интерактивные зоны поверх overlay */
+.post-card__body {
+  position: relative;
+}
+.post-card__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  cursor: pointer;
+}
+.post-card__focusable {
+  position: relative;
+  z-index: 2;
+}
+
 .card .text-body{ color: var(--sw-ink) !important; }
 
 .text-muted,
@@ -310,6 +325,20 @@ textarea:focus{
 }
 .btn-outline-secondary:active{
   transform: translateY(0);
+}
+
+/* Vote buttons — active state after like/dislike */
+.vote .js-vote-thread.vote-btn-active,
+.vote .js-vote-comment.vote-btn-active {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.vote .js-vote-thread.vote-btn-active--dislike,
+.vote .js-vote-comment.vote-btn-active--dislike {
+  background: var(--sw-danger-bg) !important;
+  color: var(--sw-danger) !important;
+  box-shadow: 0 0 0 1px var(--sw-danger);
 }
 
 .btn-outline-light {
